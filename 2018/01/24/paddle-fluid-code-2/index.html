@@ -1,0 +1,447 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+  
+    <title>paddle_fluid_code_2 | alexqin分享笔记</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="alexqdh">
+    
+
+    
+    <meta name="description" content="fluid源码阅读二基本结构Variable定义在variable.h文件中，具体定义如下1234567891011121314151617181920212223class Variable &amp;#123; public:  template &amp;lt;typename T&amp;gt;  const T&amp;amp; Get() const &amp;#123;    PADDLE_ENFORCE(holder_">
+<meta property="og:type" content="article">
+<meta property="og:title" content="paddle_fluid_code_2">
+<meta property="og:url" content="http://blog.mltalks.com/2018/01/24/paddle-fluid-code-2/index.html">
+<meta property="og:site_name" content="alexqin分享笔记">
+<meta property="og:description" content="fluid源码阅读二基本结构Variable定义在variable.h文件中，具体定义如下1234567891011121314151617181920212223class Variable &amp;#123; public:  template &amp;lt;typename T&amp;gt;  const T&amp;amp; Get() const &amp;#123;    PADDLE_ENFORCE(holder_">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://blog.mltalks.com/images/paddle_fluid_code_2/paddle_fluid_pserver_op.png">
+<meta property="og:updated_time" content="2018-05-18T03:47:01.626Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="paddle_fluid_code_2">
+<meta name="twitter:description" content="fluid源码阅读二基本结构Variable定义在variable.h文件中，具体定义如下1234567891011121314151617181920212223class Variable &amp;#123; public:  template &amp;lt;typename T&amp;gt;  const T&amp;amp; Get() const &amp;#123;    PADDLE_ENFORCE(holder_">
+<meta name="twitter:image" content="http://blog.mltalks.com/images/paddle_fluid_code_2/paddle_fluid_pserver_op.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="alexqin分享笔记" type="application/atom+xml">
+    
+    
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="alexqin分享笔记">alexqin分享笔记</a></h1>
+				<h2 class="blog-motto"></h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/about">About</a></li>
+					
+					<li>
+ 					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="search" id="search" name="q" autocomplete="off" maxlength="20" placeholder="Search" />
+						<input type="hidden" name="q" value="site:blog.mltalks.com">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2018/01/24/paddle-fluid-code-2/" title="paddle_fluid_code_2" itemprop="url">paddle_fluid_code_2</a>
+  </h1>
+  <p class="article-author">By
+       
+		<a href="/about" title="alexqdh" target="_blank" itemprop="author">alexqdh</a>
+		
+  <p class="article-time">
+    <time datetime="2018-01-24T07:55:03.000Z" itemprop="datePublished"> Published 2018-01-24</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#fluid源码阅读二"><span class="toc-number">1.</span> <span class="toc-text">fluid源码阅读二</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#基本结构"><span class="toc-number">1.1.</span> <span class="toc-text">基本结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Variable"><span class="toc-number">1.1.1.</span> <span class="toc-text">Variable</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Scope"><span class="toc-number">1.1.2.</span> <span class="toc-text">Scope</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RPC通信"><span class="toc-number">1.2.</span> <span class="toc-text">RPC通信</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#pserver端请求收发"><span class="toc-number">1.2.1.</span> <span class="toc-text">pserver端请求收发</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#trainer端请求收发"><span class="toc-number">1.2.2.</span> <span class="toc-text">trainer端请求收发</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Operator"><span class="toc-number">1.3.</span> <span class="toc-text">Operator</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#OperatorBase"><span class="toc-number">1.3.1.</span> <span class="toc-text">OperatorBase</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ExecutionContext"><span class="toc-number">1.3.2.</span> <span class="toc-text">ExecutionContext</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SendOp"><span class="toc-number">1.3.3.</span> <span class="toc-text">SendOp</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#OpKernelBase"><span class="toc-number">1.3.4.</span> <span class="toc-text">OpKernelBase</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MulOp"><span class="toc-number">1.3.5.</span> <span class="toc-text">MulOp</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#op的执行"><span class="toc-number">1.3.6.</span> <span class="toc-text">op的执行</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#带pserver的分布式实现"><span class="toc-number">1.4.</span> <span class="toc-text">带pserver的分布式实现</span></a></li></ol></li></ol>
+		
+		</div>
+		
+		<h1 id="fluid源码阅读二"><a href="#fluid源码阅读二" class="headerlink" title="fluid源码阅读二"></a>fluid源码阅读二</h1><h2 id="基本结构"><a href="#基本结构" class="headerlink" title="基本结构"></a>基本结构</h2><h3 id="Variable"><a href="#Variable" class="headerlink" title="Variable"></a>Variable</h3><p>定义在variable.h文件中，具体定义如下<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Variable</span> &#123;</span></span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">  <span class="function"><span class="keyword">const</span> T&amp; <span class="title">Get</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123;</span><br><span class="line">    PADDLE_ENFORCE(holder_ != <span class="literal">nullptr</span>, <span class="string">"Variable must hold some thing"</span>);</span><br><span class="line">    PADDLE_ENFORCE(IsType&lt;T&gt;(),</span><br><span class="line">                   <span class="string">"Variable must be type %s, the holding type is %s"</span>,</span><br><span class="line">                   <span class="keyword">typeid</span>(T).name(), holder_-&gt;Type().name());</span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">static_cast</span>&lt;<span class="keyword">const</span> T*&gt;(holder_-&gt;Ptr());</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">  <span class="function">T* <span class="title">GetMutable</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!IsType&lt;T&gt;()) &#123;</span><br><span class="line">      holder_.reset(<span class="keyword">new</span> PlaceholderImpl&lt;T&gt;(<span class="keyword">new</span> T()));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;T*&gt;(holder_-&gt;Ptr());</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">  <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;Placeholder&gt;</span><br><span class="line">      holder_;  <span class="comment">// pointers to a PlaceholderImpl object indeed.</span></span><br><span class="line">  <span class="keyword">friend</span> <span class="class"><span class="keyword">class</span> <span class="title">Scope</span>;</span></span><br><span class="line">  <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>* name_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p><code>Placeholder</code>用来真正保存分配的空间, 实现在<code>PlaceholderImpl</code>中。<br><code>Variable</code>中的<code>holder_</code>保留了指向<code>Placeholder</code>实例的指针。每个variable都有一个string类型的名字保存在<code>name_</code>中，名字只在当前Scope空间中国年有效。</p>
+<a id="more"></a>
+<h3 id="Scope"><a href="#Scope" class="headerlink" title="Scope"></a>Scope</h3><p>定义在scope.h文件中，具体定义如下<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Scope</span> &#123;</span></span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line"> ...</span><br><span class="line">  <span class="function">Variable* <span class="title">FindVar</span><span class="params">(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; name)</span> <span class="keyword">const</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">const</span> Scope&amp; <span class="title">parent</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">return</span> *parent_; &#125;</span><br><span class="line">  <span class="function"><span class="keyword">const</span> Scope* <span class="title">FindScope</span><span class="params">(<span class="keyword">const</span> Variable* var)</span> <span class="keyword">const</span></span>;</span><br><span class="line"> ...</span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">  <span class="comment">// Call Scope::NewScope for a sub-scope.</span></span><br><span class="line">  explicit Scope(Scope const* parent) : parent_(parent) &#123;&#125;</span><br><span class="line">  <span class="keyword">mutable</span> <span class="built_in">std</span>::<span class="built_in">unordered_map</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>, Variable*&gt; vars_;</span><br><span class="line">  <span class="keyword">mutable</span> <span class="built_in">std</span>::<span class="built_in">list</span>&lt;Scope*&gt; kids_;</span><br><span class="line">  Scope <span class="keyword">const</span>* parent_&#123;<span class="literal">nullptr</span>&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>scope负责存储variable类型的变量，每个scope中的vars_是负责存储变量的map，每个Variable实例都会对应成一个string类型的名字。scope支持嵌套，list类型的kids变量负责存储当前scope的子scope。针对Variable提供了FindVar的接口支持查询操作。</p>
+<h2 id="RPC通信"><a href="#RPC通信" class="headerlink" title="RPC通信"></a>RPC通信</h2><p>paddle采用grpc作为底层的通信系统，paddle/operators/detail/send_recv.proto定义pserver收发消息的rpc消息接口，具体实现是在<br>recv_impl.cc中，头文件对应send_recv_impl.h。</p>
+<h3 id="pserver端请求收发"><a href="#pserver端请求收发" class="headerlink" title="pserver端请求收发"></a>pserver端请求收发</h3><p>recv_impl.cc中SendRecvServerImpl类负责处理pserver端的rpc请求收发。定义如下:<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="built_in">std</span>::pair&lt;<span class="built_in">std</span>::<span class="built_in">string</span>, sendrecv::VariableMessage&gt; MessageWithName;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SendRecvServerImpl</span> <span class="title">final</span> :</span> <span class="keyword">public</span> SendRecvService::Service &#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  <span class="function"><span class="keyword">explicit</span> <span class="title">SendRecvServerImpl</span><span class="params">()</span> </span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="function">Status <span class="title">SendVariable</span><span class="params">(ServerContext *context, <span class="keyword">const</span> VariableMessage *in_var,</span></span></span><br><span class="line"><span class="function"><span class="params">                      VoidMessage *out_var)</span> override</span>;</span><br><span class="line">  <span class="function">Status <span class="title">GetVariable</span><span class="params">(ServerContext *context, <span class="keyword">const</span> VariableMessage *in_var,</span></span></span><br><span class="line"><span class="function"><span class="params">                     VariableMessage *out_var)</span> override</span>;</span><br><span class="line">  <span class="function">Status <span class="title">Wait</span><span class="params">(ServerContext *context, <span class="keyword">const</span> VoidMessage *in_var,</span></span></span><br><span class="line"><span class="function"><span class="params">              VoidMessage *out_var)</span> override</span>;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">Reset</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">Done</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">SetScope</span><span class="params">(framework::Scope *scope)</span> </span>&#123; scope_ = scope; &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">const</span> MessageWithName <span class="title">Get</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> <span class="keyword">this</span>-&gt;var_recv_queue_.Pop(); &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">Push</span><span class="params">(<span class="keyword">const</span> MessageWithName &amp;msg)</span> </span>&#123; <span class="keyword">this</span>-&gt;var_recv_queue_.Push(msg); &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">  <span class="comment">// received variable from RPC, operators fetch variable from this queue.</span></span><br><span class="line">  SimpleBlockQueue&lt;MessageWithName&gt; var_recv_queue_;</span><br><span class="line">  framework::Scope *scope_;</span><br><span class="line">  <span class="comment">// condition of the sub program</span></span><br><span class="line">  <span class="built_in">std</span>::mutex mutex_;</span><br><span class="line">  <span class="keyword">bool</span> done_;</span><br><span class="line">  <span class="built_in">std</span>::condition_variable condition_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>其中var_recv_queue_ 队列负责存储收到的请求内容，目前一个请求里只能支持传一个Tensor，MessageWithName定义是<code>std::pair&lt;std::string, sendrecv::VariableMessage&gt;</code><br>mutex_, condition_, done_ 用来实现Wait接口的阻塞操作.<br>遗留问题: <code>SendRecvServerImpl::SendVariable</code>从名字上理解是发送Variable，但实现里是直接把传入<code>VariableMessage</code>塞到了<code>var_recv_queue_</code>队列中。<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Status SendRecvServerImpl::SendVariable(ServerContext *context,</span><br><span class="line">                                        <span class="keyword">const</span> VariableMessage *in_var,</span><br><span class="line">                                        VoidMessage *out_var) &#123;</span><br><span class="line">  MessageWithName msg_with_name =</span><br><span class="line">      <span class="built_in">std</span>::make_pair(in_var-&gt;varname(), <span class="built_in">std</span>::move(*in_var));</span><br><span class="line">  var_recv_queue_.Push(<span class="built_in">std</span>::move(msg_with_name));</span><br><span class="line">  <span class="keyword">return</span> Status::OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="trainer端请求收发"><a href="#trainer端请求收发" class="headerlink" title="trainer端请求收发"></a>trainer端请求收发</h3><p>RPCClient类实现了trainer/worker端的rpc请求收发，定义:<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">RPCClient</span> &#123;</span></span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  RPCClient(<span class="built_in">std</span>::<span class="built_in">shared_ptr</span>&lt;Channel&gt; channel)</span><br><span class="line">      : stub_(SendRecvService::NewStub(channel)) &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">bool</span> <span class="title">SendVariable</span><span class="params">(<span class="keyword">const</span> framework::Scope &amp;scope, <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span> &amp;inname)</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">bool</span> <span class="title">GetVariable</span><span class="params">(<span class="keyword">const</span> framework::Scope &amp;scope, <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span> &amp;outname)</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">Wait</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">  <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;SendRecvService::Stub&gt; stub_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>与stub_保存了与单个pserver通信的Stub，<code>SendVariable</code>函数中做的事情是把本地Scope中名字为<code>inname</code>的<code>Variable</code>数据封装成一个<code>VariableMessage</code>发送给pserver。<code>GetVariable</code>函数中做的事情正好相反，从收到的rpc请求中取出名为<code>outname</code>的<code>VariableMesage</code>保存到本地的<code>Scope</code>中。</p>
+<p>所有的Variable在收发的时候会通过<code>SerializeToStream</code>与<code>DeserializeFromStream</code>进行序列化与反序列化操作，不同类型的Variable的序列化函数定义在各自实现文件中，例如:<code>lod_tensor.cc selected_rows.cc</code>，公共的序列化操作定义在<code>tensor_util.h</code>文件中。</p>
+<p>待开发计划:<br>目前不管是pserver还是trainer的<code>GetVariable</code>与<code>SendVariable</code>方法，固定传入的Place都是<code>platform::CPUDeviceContext</code>，这块后面会增加其他Place类型。</p>
+<h2 id="Operator"><a href="#Operator" class="headerlink" title="Operator"></a>Operator</h2><h3 id="OperatorBase"><a href="#OperatorBase" class="headerlink" title="OperatorBase"></a>OperatorBase</h3><p>OperatorBase是所有Op类的基类，所有Op都会实现对应的接口。<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OperatorBase</span> &#123;</span></span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  OperatorBase(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; type, <span class="keyword">const</span> VariableNameMap&amp; inputs,</span><br><span class="line">               <span class="keyword">const</span> VariableNameMap&amp; outputs, <span class="keyword">const</span> AttributeMap&amp; attrs);</span><br><span class="line">  <span class="keyword">virtual</span> ~OperatorBase() &#123;&#125;</span><br><span class="line">  <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">  <span class="function"><span class="keyword">inline</span> <span class="keyword">const</span> T&amp; <span class="title">Attr</span><span class="params">(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; name)</span> <span class="keyword">const</span> </span>&#123;</span><br><span class="line">    PADDLE_ENFORCE(attrs_.count(name) != <span class="number">0</span>, <span class="string">"%s should be in AttributeMap"</span>,</span><br><span class="line">                   name);</span><br><span class="line">    <span class="keyword">return</span> boost::get&lt;T&gt;(attrs_.at(name));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">/// Net will call this function to Run an op.</span></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">Run</span><span class="params">(<span class="keyword">const</span> Scope&amp; scope, <span class="keyword">const</span> platform::Place&amp; place)</span> <span class="keyword">const</span> </span>= <span class="number">0</span>;</span><br><span class="line">  <span class="comment">// FIXME(typhoonzero): this is only used for recv_op to stop event_loop.</span></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">Stop</span><span class="params">()</span> </span>&#123;&#125;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="keyword">bool</span> <span class="title">IsNetOp</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">return</span> <span class="literal">false</span>; &#125;</span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="keyword">bool</span> <span class="title">SupportGPU</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">return</span> <span class="literal">false</span>; &#125;</span><br><span class="line">  <span class="comment">/// rename inputs outputs name</span></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">Rename</span><span class="params">(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; old_name, <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; new_name)</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">const</span> VariableNameMap&amp; <span class="title">Inputs</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">return</span> inputs_; &#125;</span><br><span class="line">  <span class="function"><span class="keyword">const</span> VariableNameMap&amp; <span class="title">Outputs</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">return</span> outputs_; &#125;</span><br><span class="line">  <span class="comment">//! Get a input with argument's name described in `op_proto`</span></span><br><span class="line">  <span class="built_in">std</span>::<span class="function"><span class="built_in">string</span> <span class="title">Input</span><span class="params">(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; name)</span> <span class="keyword">const</span></span>;</span><br><span class="line">  <span class="comment">//! Get a input which has multiple variables.</span></span><br><span class="line">  <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt;&amp; Inputs(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; name) <span class="keyword">const</span>;</span><br><span class="line">  <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; InputVars() <span class="keyword">const</span>;</span><br><span class="line">  <span class="comment">//! Get a output with argument's name described in `op_proto`</span></span><br><span class="line">  <span class="built_in">std</span>::<span class="function"><span class="built_in">string</span> <span class="title">Output</span><span class="params">(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; name)</span> <span class="keyword">const</span></span>;</span><br><span class="line">  <span class="comment">//! Get an output which has multiple variables.</span></span><br><span class="line">  <span class="comment">//! TODO add a vector_view to prevent memory copy.</span></span><br><span class="line">  <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt;&amp; Outputs(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; name) <span class="keyword">const</span>;</span><br><span class="line">  <span class="keyword">virtual</span> <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; OutputVars(<span class="keyword">bool</span> has_intermediate) <span class="keyword">const</span>;</span><br><span class="line">  <span class="keyword">const</span> <span class="built_in">std</span>::<span class="function"><span class="built_in">string</span>&amp; <span class="title">Type</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">return</span> type_; &#125;</span><br><span class="line">  <span class="function"><span class="keyword">const</span> AttributeMap&amp; <span class="title">Attrs</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">return</span> attrs_; &#125;</span><br><span class="line"> <span class="keyword">protected</span>:</span><br><span class="line">  <span class="built_in">std</span>::<span class="built_in">string</span> type_;</span><br><span class="line">  <span class="comment">// <span class="doctag">NOTE:</span> in case of OpGrad, inputs_ contains:</span></span><br><span class="line">  <span class="comment">// I (Inputs)</span></span><br><span class="line">  <span class="comment">// O (Outputs)</span></span><br><span class="line">  <span class="comment">// OG (Output Gradients)</span></span><br><span class="line">  VariableNameMap inputs_;</span><br><span class="line">  <span class="comment">// <span class="doctag">NOTE:</span> in case of OpGrad, outputs_ contains</span></span><br><span class="line">  <span class="comment">// IG (Inputs Gradients)</span></span><br><span class="line">  VariableNameMap outputs_;</span><br><span class="line">  AttributeMap attrs_;</span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">GenerateTemporaryNames</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">CheckAllInputOutputSet</span><span class="params">()</span> <span class="keyword">const</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>这里<code>attrs_</code>存储op的属性，<code>inputs_</code>与<code>outputs_</code>分别存储op的输入变量名称和输出变量名称，变量名称是string类型存储的，通过key(I, O, OG)的不同来区分不同的输入和输出。当Net中开始执行op的时候会调用op中的<code>Run</code>方法来执行。其中<code>AttributeMap</code>与<code>VariableNameMap</code>定义是在type_defs.h中，定义为<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> VariableNameMap = <span class="built_in">std</span>::<span class="built_in">map</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>, <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt;&gt;;</span><br><span class="line"><span class="comment">// The order should be as same as framework.proto</span></span><br><span class="line"><span class="keyword">using</span> Attribute =</span><br><span class="line">    boost::variant&lt;boost::blank, <span class="keyword">int</span>, <span class="keyword">float</span>, <span class="built_in">std</span>::<span class="built_in">string</span>, <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;,</span><br><span class="line">                   <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">float</span>&gt;, <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt;, <span class="keyword">bool</span>,</span><br><span class="line">                   <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">bool</span>&gt;, BlockDesc*&gt;;</span><br><span class="line"><span class="keyword">using</span> AttributeMap = <span class="built_in">std</span>::<span class="built_in">unordered_map</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>, Attribute&gt;;</span><br></pre></td></tr></table></figure></p>
+<p>函数Input与Inputs的区别在于Input只用于只有一个变量名称(Variable)的情况，Inputs的返回值是返回一个string类型的变量名称数组vector。同理Output与Outputs是类似的。InputVars与OutputVars是把variable名称字典中所有的variable名称都打平放到一个vector中返回给用户，其中有个has_intermediate参数来表明是否结果中需要包含临时的变量。变量真正的存储的位置是在Scope中。</p>
+<h3 id="ExecutionContext"><a href="#ExecutionContext" class="headerlink" title="ExecutionContext"></a>ExecutionContext</h3><p>ExecutionContext是执行op的上下文环境的一个类，前面说OperatorBase中只保存了待操作变量的名称，这里ExecutionContext中就负责从对应Scope中把真是的Variable变量返回。以及可以返回Op对应的Attr内容。另外，在ExecutionContext也保存了platform::DeviceContext的执行设备的信息。</p>
+<h3 id="SendOp"><a href="#SendOp" class="headerlink" title="SendOp"></a>SendOp</h3><p>sendOp相对简单，先举个简单的例子。<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SendOp</span> :</span> <span class="keyword">public</span> framework::OperatorBase &#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  SendOp(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span> &amp;type, <span class="keyword">const</span> framework::VariableNameMap &amp;inputs,</span><br><span class="line">         <span class="keyword">const</span> framework::VariableNameMap &amp;outputs,</span><br><span class="line">         <span class="keyword">const</span> framework::AttributeMap &amp;attrs)</span><br><span class="line">      : OperatorBase(type, inputs, outputs, attrs) &#123;</span><br><span class="line">    <span class="comment">// init client when the operator is created at runtime.</span></span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; endpoints =</span><br><span class="line">        Attr&lt;<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt;&gt;(<span class="string">"endpoints"</span>);</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> ep : endpoints) &#123;</span><br><span class="line">      client_map_[ep].reset(<span class="keyword">new</span> detail::RPCClient(</span><br><span class="line">          grpc::CreateChannel(ep, grpc::InsecureChannelCredentials())));</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">Run</span><span class="params">(<span class="keyword">const</span> framework::Scope &amp;scope,</span></span></span><br><span class="line"><span class="function"><span class="params">           <span class="keyword">const</span> platform::Place &amp;dev_place)</span> <span class="keyword">const</span> override </span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> ins = Inputs(<span class="string">"X"</span>);</span><br><span class="line">    <span class="keyword">auto</span> outs = Outputs(<span class="string">"Out"</span>);</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; epmap = Attr&lt;<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt;&gt;(<span class="string">"epmap"</span>);</span><br><span class="line">    <span class="comment">// TODO(typhoonzero): use async calls to send multiple variable asyncly.</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; ins.size(); ++i) &#123;</span><br><span class="line">      <span class="keyword">bool</span> ret = client_map_[epmap[i]]-&gt;SendVariable(scope, ins[i]);</span><br><span class="line">      <span class="keyword">if</span> (!ret) &#123;</span><br><span class="line">        LOG(ERROR) &lt;&lt; <span class="string">"send variable error: "</span> &lt;&lt; ins[i];</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// TODO(typhoonzero): support async optimization</span></span><br><span class="line">    client_map_[epmap[<span class="number">0</span>]]-&gt;Wait();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; outs.size(); ++i) &#123;</span><br><span class="line">      <span class="keyword">bool</span> ret = client_map_[epmap[i]]-&gt;GetVariable(scope, outs[i]);</span><br><span class="line">      <span class="keyword">if</span> (!ret) &#123;</span><br><span class="line">        LOG(ERROR) &lt;&lt; <span class="string">"GetVariable error: "</span> &lt;&lt; outs[i];</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">protected</span>:</span><br><span class="line">  <span class="keyword">mutable</span> <span class="built_in">std</span>::<span class="built_in">unordered_map</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>, <span class="built_in">std</span>::<span class="built_in">shared_ptr</span>&lt;detail::RPCClient&gt;&gt;</span><br><span class="line">      client_map_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p><code>client_map_</code>保存所有跟pserver通信的Client，在初始化的时候根据endpoint进行初始化操作，Run方法真正开始执行的时候，根据X, Out取出对应的输入输出变量名(这里key是固定的)，从scope中取出对应的Variable，然后调用RpcClient的Send方法进行发送，目前是阻塞式的，每次只发一个变量，效率低，后续优化会改成异步发送。</p>
+<h3 id="OpKernelBase"><a href="#OpKernelBase" class="headerlink" title="OpKernelBase"></a>OpKernelBase</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OpKernelBase</span> &#123;</span></span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * ExecutionContext is the only parameter of Kernel Run function.</span></span><br><span class="line"><span class="comment">   * Run will get input/output variables, state such as momentum and</span></span><br><span class="line"><span class="comment">   * device resource such as CUDA stream, cublas handle, etc. from</span></span><br><span class="line"><span class="comment">   * ExecutionContext. User should construct it before run the Operator.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function"><span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">Compute</span><span class="params">(<span class="keyword">const</span> ExecutionContext&amp; context)</span> <span class="keyword">const</span> </span>= <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">virtual</span> ~OpKernelBase() = <span class="keyword">default</span>;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OpKernel</span> :</span> <span class="keyword">public</span> OpKernelBase &#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  <span class="keyword">using</span> ELEMENT_TYPE = T;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>OpKernelBase</code>把<code>ExecutionContext</code>传入当成唯一的参数。<code>OpKernelBase</code>是Op计算函数的基类，依据是否包含kernel，可以将Op分为两种：包含Kernel的Op和不包含kernel的Op，前者Op的定义继承自OperatorWithKernel，后者继承自OperatorBase。在operator.h中专门定义有<code>OperatorWithKernel</code>是在<code>OperatorBase</code>中加入了<code>OpKernelMap</code>，接下来会举一个<code>OpKearnel</code>的例子。添加新op可参考文档<br><a href="https://github.com/PaddlePaddle/Paddle/blob/develop/doc/howto/dev/new_op_cn.md" target="_blank" rel="noopener">如何添加带kernel的Operator</a></p>
+<h3 id="MulOp"><a href="#MulOp" class="headerlink" title="MulOp"></a>MulOp</h3><p>首先说说下注册，MulOp定义在mul_op.cc, mul_op.h文件中，op在添加的时候需要进行注册操作。<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> ops = paddle::operators;</span><br><span class="line">REGISTER_OPERATOR(mul, paddle::framework::OperatorWithKernel, ops::MulOpMaker,</span><br><span class="line">                  ops::MulOpShapeInference,</span><br><span class="line">                  paddle::framework::DefaultGradOpDescMaker&lt;<span class="literal">true</span>&gt;);</span><br><span class="line">REGISTER_OPERATOR(mul_grad, ops::MulOpGrad);</span><br><span class="line">REGISTER_OP_CPU_KERNEL(</span><br><span class="line">    mul, ops::MulKernel&lt;paddle::platform::CPUDeviceContext, <span class="keyword">float</span>&gt;);</span><br><span class="line">REGISTER_OP_CPU_KERNEL(</span><br><span class="line">    mul_grad, ops::MulGradKernel&lt;paddle::platform::CPUDeviceContext, <span class="keyword">float</span>&gt;);</span><br></pre></td></tr></table></figure></p>
+<p>之前的注册机制<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> ops = paddle::operators;</span><br><span class="line">REGISTER_OP(mul, ops::MulOp, ops::MulOpMaker, mul_grad, ops::MulOpGrad);</span><br><span class="line">REGISTER_OP_CPU_KERNEL(mul, ops::MulKernel&lt;paddle::platform::CPUDeviceContext, <span class="keyword">float</span>&gt;);</span><br><span class="line">REGISTER_OP_CPU_KERNEL(mul_grad,</span><br><span class="line">              ops::MulGradKernel&lt;paddle::platform::CPUDeviceContext, <span class="keyword">float</span>&gt;);</span><br></pre></td></tr></table></figure></p>
+<p>目前共存了有两种注册机制，REGISTER_OP注册时候把计算mul与mul_grad都一起注册了，REGISTER_OPERATOR注册的时候给分开了，其实REGISTER_OP底层也是用的REGISTER_OPERATOR，相比REGISTER_OPERATOR更简单一点。</p>
+<p>MulOp具体的实现<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MulOpShapeInference</span> :</span> <span class="keyword">public</span> framework::InferShapeBase &#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">operator</span><span class="params">()</span><span class="params">(framework::InferShapeContext* ctx)</span> <span class="keyword">const</span> override </span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> x_dims = ctx-&gt;GetInputDim(<span class="string">"X"</span>);</span><br><span class="line">    <span class="keyword">auto</span> y_dims = ctx-&gt;GetInputDim(<span class="string">"Y"</span>);</span><br><span class="line">    <span class="keyword">int</span> x_num_col_dims = ctx-&gt;Attrs().Get&lt;<span class="keyword">int</span>&gt;(<span class="string">"x_num_col_dims"</span>);</span><br><span class="line">    <span class="keyword">int</span> y_num_col_dims = ctx-&gt;Attrs().Get&lt;<span class="keyword">int</span>&gt;(<span class="string">"y_num_col_dims"</span>);</span><br><span class="line"></span><br><span class="line">    ....</span><br><span class="line">    ctx-&gt;SetOutputDim(<span class="string">"Out"</span>, framework::make_ddim(output_dims));</span><br><span class="line">    ctx-&gt;ShareLoD(<span class="string">"X"</span>, <span class="comment">/*-&gt;*/</span> <span class="string">"Out"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MulOpMaker</span> :</span> <span class="keyword">public</span> framework::OpProtoAndCheckerMaker &#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  MulOpMaker(OpProto* proto, OpAttrChecker* op_checker)</span><br><span class="line">      : OpProtoAndCheckerMaker(proto, op_checker) &#123;</span><br><span class="line">    AddInput(<span class="string">"X"</span>, <span class="string">"(Tensor), The first input tensor of mul op."</span>);</span><br><span class="line">    AddInput(<span class="string">"Y"</span>, <span class="string">"(Tensor), The second input tensor of mul op."</span>);</span><br><span class="line">    AddOutput(<span class="string">"Out"</span>, <span class="string">"(Tensor), The output tensor of mul op."</span>);</span><br><span class="line">  ...</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> DeviceContext, <span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MulKernel</span> :</span> <span class="keyword">public</span> framework::OpKernel&lt;T&gt; &#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">Compute</span><span class="params">(<span class="keyword">const</span> framework::ExecutionContext&amp; context)</span> <span class="keyword">const</span> override </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> Tensor* x = context.Input&lt;Tensor&gt;(<span class="string">"X"</span>);</span><br><span class="line">    <span class="keyword">const</span> Tensor* y = context.Input&lt;Tensor&gt;(<span class="string">"Y"</span>);</span><br><span class="line">    Tensor* z = context.Output&lt;Tensor&gt;(<span class="string">"Out"</span>);</span><br><span class="line">   ......</span><br><span class="line">    math::matmul&lt;DeviceContext, T&gt;(</span><br><span class="line">        context.<span class="keyword">template</span> device_context&lt;DeviceContext&gt;(), x_matrix, <span class="literal">false</span>,</span><br><span class="line">        y_matrix, <span class="literal">false</span>, <span class="number">1</span>, z, <span class="number">0</span>);</span><br><span class="line">	......</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>MulOp实现过程中主要有两个类MulOpMaker与MulKernel，MulOpMaker主要进行的时候通过proto的描述信息生成对应的op操作，MulKernel作用是真正实现计算逻辑，定义在Compute方法中。另外还有一个步操作是推导输出tensor的维度，目前也有两种方式，一个是继承framework::InferShapeBase类实现得MulOpShapeInference，还有一种方式是MulOpGrad中重载父类framework::OperatorWithKernel中的InferShape方法。</p>
+<h3 id="op的执行"><a href="#op的执行" class="headerlink" title="op的执行"></a>op的执行</h3><p>所有的操作都是op的组合，在python中实现的时候所有的op都会append到Block中，然后通过proto格式发给具体实行的c++程序。在executor.py的<code>run</code>函数中会进行汇总，具体代码如下:<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">run</span><span class="params">(self,</span></span></span><br><span class="line"><span class="function"><span class="params">            program=None,</span></span></span><br><span class="line"><span class="function"><span class="params">            feed=None,</span></span></span><br><span class="line"><span class="function"><span class="params">            fetch_list=None,</span></span></span><br><span class="line"><span class="function"><span class="params">            feed_var_name=<span class="string">'feed'</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">            fetch_var_name=<span class="string">'fetch'</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">            scope=None,</span></span></span><br><span class="line"><span class="function"><span class="params">            return_numpy=True)</span>:</span></span><br><span class="line">    ......</span><br><span class="line">	<span class="keyword">for</span> i, var <span class="keyword">in</span> enumerate(fetch_list):</span><br><span class="line">            global_block.append_op(</span><br><span class="line">                type=<span class="string">'fetch'</span>,</span><br><span class="line">                inputs=&#123;<span class="string">'X'</span>: [var]&#125;,</span><br><span class="line">                outputs=&#123;<span class="string">'Out'</span>: [fetch_var]&#125;,</span><br><span class="line">                attrs=&#123;<span class="string">'col'</span>: i&#125;)</span><br><span class="line"></span><br><span class="line">    self.executor.run(program.desc, scope, <span class="number">0</span>, <span class="keyword">True</span>, <span class="keyword">True</span>)</span><br><span class="line">    ......</span><br></pre></td></tr></table></figure></p>
+<p>python中的run实际是调用在c++的executor.cc中实现的run方法，按照添加op的顺序会依次执行每一个op的Run方法，op的输入输出的变量都保存在Scope中。<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="keyword">auto</span>&amp; op_desc : block.AllOps()) &#123;</span><br><span class="line">  <span class="keyword">auto</span> op = paddle::framework::OpRegistry::CreateOp(*op_desc);</span><br><span class="line">  VLOG(<span class="number">3</span>) &lt;&lt; op-&gt;DebugStringEx(local_scope);</span><br><span class="line">  op-&gt;Run(*local_scope, place_);</span><br><span class="line">  <span class="keyword">if</span> (FLAGS_check_nan_inf) &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; vname : op-&gt;OutputVars(<span class="literal">true</span>)) &#123;</span><br><span class="line">      <span class="keyword">auto</span>* var = local_scope-&gt;FindVar(vname);</span><br><span class="line">      <span class="keyword">if</span> (var == <span class="literal">nullptr</span>) <span class="keyword">continue</span>;</span><br><span class="line">      <span class="keyword">if</span> (var-&gt;IsType&lt;framework::LoDTensor&gt;()) &#123;</span><br><span class="line">        CheckTensorNANOrInf(vname, var-&gt;Get&lt;framework::LoDTensor&gt;());</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="带pserver的分布式实现"><a href="#带pserver的分布式实现" class="headerlink" title="带pserver的分布式实现"></a>带pserver的分布式实现</h2><p>为了支持分布式版本的paddle训练，python中新增了DistributeTranspiler类，DistributeTranspiler的作用主要是optimization操作都放到了参数服务器上，在本地训练中的trainer上删除所有optimization操作。并针对trainer和pserver程序自动增加send_op操作。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DistributeTranspiler</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">transpile</span><span class="params">(self,</span></span></span><br><span class="line"><span class="function"><span class="params">                  optimize_ops,</span></span></span><br><span class="line"><span class="function"><span class="params">                  params_grads,</span></span></span><br><span class="line"><span class="function"><span class="params">                  program=None,</span></span></span><br><span class="line"><span class="function"><span class="params">                  pservers=<span class="string">"127.0.0.1:6174"</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">                  trainers=<span class="number">1</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">                  split_method=round_robin)</span>:</span></span><br><span class="line">        <span class="keyword">if</span> program <span class="keyword">is</span> <span class="keyword">None</span>:</span><br><span class="line">            program = default_main_program()</span><br><span class="line">        self.program = program</span><br><span class="line">        self.trainers = trainers</span><br><span class="line">        self.optimize_ops = optimize_ops</span><br><span class="line">        self._optimize_distributed(</span><br><span class="line">            optimize_ops,</span><br><span class="line">            program,</span><br><span class="line">            params_grads,</span><br><span class="line">            pservers=pservers,</span><br><span class="line">            trainers=trainers,</span><br><span class="line">            split_method=split_method)</span><br><span class="line">	<span class="function"><span class="keyword">def</span> <span class="title">get_trainer_program</span><span class="params">(self)</span>:</span><span class="comment">#获取trainer程序</span></span><br><span class="line">        <span class="comment"># remove optimize ops and add a send op to main_program</span></span><br><span class="line">        self.program.global_block().delete_ops(self.optimize_ops)</span><br><span class="line">        <span class="keyword">return</span> self.program</span><br></pre></td></tr></table></figure></p>
+<p>_optimize_distributed程序的具体实现<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_optimize_distributed</span><span class="params">(self, optimize_ops, program, params_and_grads,</span></span></span><br><span class="line"><span class="function"><span class="params">                              **kwargs)</span>:</span></span><br><span class="line">        <span class="keyword">if</span> kwargs.has_key(<span class="string">"split_method"</span>):</span><br><span class="line">            split_method = kwargs[<span class="string">"split_method"</span>]</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            split_method = round_robin</span><br><span class="line"></span><br><span class="line">        <span class="keyword">assert</span> (callable(split_method))</span><br><span class="line">        pserver_endpoints = kwargs[<span class="string">"pservers"</span>].split(<span class="string">","</span>)</span><br><span class="line">        self.param_grad_map = split_method(params_and_grads, pserver_endpoints)</span><br><span class="line"></span><br><span class="line">        send_op_ordered_inputs = []</span><br><span class="line">        send_op_ordered_outputs = []</span><br><span class="line">        epmap = []</span><br><span class="line">        <span class="keyword">for</span> ep, v <span class="keyword">in</span> self.param_grad_map.iteritems():</span><br><span class="line">            send_op_ordered_inputs.extend(v[<span class="string">"grads"</span>])</span><br><span class="line">            send_op_ordered_outputs.extend(v[<span class="string">"params"</span>])</span><br><span class="line">            <span class="keyword">for</span> i <span class="keyword">in</span> v[<span class="string">"grads"</span>]:</span><br><span class="line">                epmap.append(ep)</span><br><span class="line">        send_op = program.global_block().append_op(</span><br><span class="line">            type=<span class="string">"send"</span>,</span><br><span class="line">            inputs=&#123;<span class="string">"X"</span>: send_op_ordered_inputs</span><br><span class="line">                    &#125;,  <span class="comment"># inputs is a list of tensors to be send</span></span><br><span class="line">            outputs=&#123;<span class="string">"Out"</span>: send_op_ordered_outputs&#125;,</span><br><span class="line">            attrs=&#123;<span class="string">"endpoints"</span>: pserver_endpoints,</span><br><span class="line">                   <span class="string">"epmap"</span>: epmap&#125;)</span><br></pre></td></tr></table></figure></p>
+<p>首先针对传入的params_and_grads进行参数切分，通过传入的切分方法来把参数切分到不同的pserver上。通过添加send_op进行pserver参数的同步操作。这一步是在transpile中执行的，在python实现程序中transpile放到DistributeTranspiler实例创建完以后就执行。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_pserver_program</span><span class="params">(self, endpoint, optimize_ops)</span>:</span></span><br><span class="line">        pserver_program = Program()</span><br><span class="line">        <span class="keyword">for</span> v <span class="keyword">in</span> self.param_grad_map[endpoint][<span class="string">"params"</span>]:</span><br><span class="line">            self._clone_param(pserver_program.global_block(), v)</span><br><span class="line"></span><br><span class="line">        optimize_sub_program = Program()</span><br><span class="line">        grad_var_names = [</span><br><span class="line">            var.name <span class="keyword">for</span> var <span class="keyword">in</span> self.param_grad_map[endpoint][<span class="string">"grads"</span>]</span><br><span class="line">        ]</span><br><span class="line">        <span class="keyword">for</span> opt_op <span class="keyword">in</span> optimize_ops:</span><br><span class="line">            <span class="keyword">for</span> _, var <span class="keyword">in</span> opt_op.inputs.iteritems():</span><br><span class="line">                <span class="comment"># <span class="doctag">NOTE:</span> append operators to merge gradients from multiple</span></span><br><span class="line">                <span class="comment"># trainers. If trainers == 1, this is not needed.</span></span><br><span class="line">                <span class="keyword">if</span> self.trainers &gt; <span class="number">1</span> <span class="keyword">and</span> var.name <span class="keyword">in</span> grad_var_names:</span><br><span class="line">                    vars2merge = self._create_var_for_trainers(</span><br><span class="line">                        optimize_sub_program.global_block(), var, self.trainers)</span><br><span class="line">                    merged_var = optimize_sub_program.global_block().create_var(</span><br><span class="line">                        name=var.name,</span><br><span class="line">                        persistable=var.persistable,</span><br><span class="line">                        dtype=var.dtype,</span><br><span class="line">                        shape=var.shape)</span><br><span class="line">                    optimize_sub_program.global_block().append_op(</span><br><span class="line">                        type=<span class="string">"sum"</span>,</span><br><span class="line">                        inputs=&#123;<span class="string">"X"</span>: vars2merge&#125;,</span><br><span class="line">                        outputs=&#123;<span class="string">"Out"</span>: merged_var&#125;)</span><br><span class="line">                    optimize_sub_program.global_block().append_op(</span><br><span class="line">                        type=<span class="string">"scale"</span>,</span><br><span class="line">                        inputs=&#123;<span class="string">"X"</span>: merged_var&#125;,</span><br><span class="line">                        outputs=&#123;<span class="string">"Out"</span>: merged_var&#125;,</span><br><span class="line">                        attrs=&#123;<span class="string">"scale"</span>: <span class="number">1.0</span> / float(self.trainers)&#125;)</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    optimize_sub_program.global_block().create_var(</span><br><span class="line">                        name=var.name,</span><br><span class="line">                        persistable=var.persistable,</span><br><span class="line">                        dtype=var.dtype,</span><br><span class="line">                        shape=var.shape)</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> opt_op.inputs.has_key(<span class="string">"Grad"</span>):</span><br><span class="line">                <span class="keyword">if</span> opt_op.inputs[<span class="string">"Grad"</span>].name <span class="keyword">in</span> grad_var_names:</span><br><span class="line">                    optimize_sub_program.global_block().append_op(</span><br><span class="line">                        type=opt_op.type,</span><br><span class="line">                        inputs=opt_op.inputs,</span><br><span class="line">                        outputs=opt_op.outputs,</span><br><span class="line">                        attrs=opt_op.attrs)</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                optimize_sub_program.global_block().append_op(</span><br><span class="line">                    type=opt_op.type,</span><br><span class="line">                    inputs=opt_op.inputs,</span><br><span class="line">                    outputs=opt_op.outputs,</span><br><span class="line">                    attrs=opt_op.attrs)</span><br><span class="line">        pserver_program.global_block().append_op(</span><br><span class="line">            type=<span class="string">"recv"</span>,</span><br><span class="line">            inputs=&#123;<span class="string">"RX"</span>:</span><br><span class="line">                    self.param_grad_map[endpoint][<span class="string">"grads"</span>]&#125;,  <span class="comment"># grads to recv</span></span><br><span class="line">            outputs=&#123;&#125;,</span><br><span class="line">            attrs=&#123;</span><br><span class="line">                <span class="string">"OptimizeProgram"</span>: optimize_sub_program.desc,</span><br><span class="line">                <span class="string">"endpoint"</span>: endpoint,</span><br><span class="line">                <span class="string">"ParamList"</span>:</span><br><span class="line">                [p.name <span class="keyword">for</span> p <span class="keyword">in</span> self.param_grad_map[endpoint][<span class="string">"params"</span>]],</span><br><span class="line">                <span class="string">"GradList"</span>:</span><br><span class="line">                [p.name <span class="keyword">for</span> p <span class="keyword">in</span> self.param_grad_map[endpoint][<span class="string">"grads"</span>]],</span><br><span class="line">                <span class="string">"Trainers"</span>: self.trainers</span><br><span class="line">            &#125;)</span><br><span class="line">        pserver_program.sync_with_cpp()</span><br><span class="line">        <span class="keyword">return</span> pserver_program</span><br></pre></td></tr></table></figure>
+<p>pserver程序执行的时候需要先通过get_pserver_program获取pserver的program，这里一开始会先把split以后的参数拷贝到当前pserver_program的global_block里。保存所有梯度对应的变量名到grad_var_names中。通过_create_var_for_trainers在每个pserver上为每一个trainer都创建相同的变量，保存在optimize_sub_program的global_block中，同时也创建了一个用来合并所有trainer的变量merged_var。在optimize_sub_program添加了<code>sum</code>与<code>scale</code>的op操作用来合并计算的梯度。opt_op.inputs中如果有名为”Grad”的key的表明有针对Grad进行操作的新op需要进行append_op操作。最后一步操作是给pserver_program增加<code>recv</code>类型的op用来收取各个trainer发送过来的梯度内容。<br><img src="/images/paddle_fluid_code_2/paddle_fluid_pserver_op.png" alt=""></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="http://blog.mltalks.com/2018/01/24/paddle-fluid-code-2/" data-title="paddle_fluid_code_2 | alexqin分享笔记" data-tsina="" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2018/05/18/Spectral-Clustering/" title="Spectral Clustering">
+  <strong>上一篇：</strong><br/>
+  <span>
+  Spectral Clustering</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2017/03/25/clipper-online-prediction-system/"  title="Clipper低延迟在线预测系统设计">
+ <strong>下一篇：</strong><br/> 
+ <span>Clipper低延迟在线预测系统设计
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#fluid源码阅读二"><span class="toc-number">1.</span> <span class="toc-text">fluid源码阅读二</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#基本结构"><span class="toc-number">1.1.</span> <span class="toc-text">基本结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Variable"><span class="toc-number">1.1.1.</span> <span class="toc-text">Variable</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Scope"><span class="toc-number">1.1.2.</span> <span class="toc-text">Scope</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RPC通信"><span class="toc-number">1.2.</span> <span class="toc-text">RPC通信</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#pserver端请求收发"><span class="toc-number">1.2.1.</span> <span class="toc-text">pserver端请求收发</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#trainer端请求收发"><span class="toc-number">1.2.2.</span> <span class="toc-text">trainer端请求收发</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Operator"><span class="toc-number">1.3.</span> <span class="toc-text">Operator</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#OperatorBase"><span class="toc-number">1.3.1.</span> <span class="toc-text">OperatorBase</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ExecutionContext"><span class="toc-number">1.3.2.</span> <span class="toc-text">ExecutionContext</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SendOp"><span class="toc-number">1.3.3.</span> <span class="toc-text">SendOp</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#OpKernelBase"><span class="toc-number">1.3.4.</span> <span class="toc-text">OpKernelBase</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MulOp"><span class="toc-number">1.3.5.</span> <span class="toc-text">MulOp</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#op的执行"><span class="toc-number">1.3.6.</span> <span class="toc-text">op的执行</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#带pserver的分布式实现"><span class="toc-number">1.4.</span> <span class="toc-text">带pserver的分布式实现</span></a></li></ol></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">Categories</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/其他/" title="其他">其他<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/机器学习/" title="机器学习">机器学习<sup>1</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/系统架构/" title="系统架构">系统架构<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/其他/" title="其他">其他<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2018 
+		
+		<a href="/about" target="_blank" title="alexqdh">alexqdh</a>
+		
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+
+	<div id="totop">
+	<a title="Back to Top"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
