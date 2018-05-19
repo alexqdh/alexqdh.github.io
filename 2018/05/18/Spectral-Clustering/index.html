@@ -11,13 +11,13 @@
     
 
     
-    <meta name="description" content="谱聚类简介这里先提前说下谱聚类的基本特征，然后后面按照论文的顺序做了讲解。  谱聚类算法与kmeans的区别，是把聚类的过程看成了一个图切割的过程，每一条样本都看成是N维空间内的一个节点，然后我们希望切割出来的子图，在子图内部点与点之前的距离(也就是相似度)会比较高，子图与子图之间的距离尽可能的小。 在谱聚类的过程中会把原始数据会做变换，从高维空间映射到低维空间，这样更容易进行聚类，可以看成向量">
+    <meta name="description" content="谱聚类简介">
 <meta name="keywords" content="机器学习">
 <meta property="og:type" content="article">
 <meta property="og:title" content="谱聚类算法介绍(Spectral Clustering)">
 <meta property="og:url" content="http://blog.mltalks.com/2018/05/18/Spectral-Clustering/index.html">
 <meta property="og:site_name" content="Alexqin&#39;s Blog">
-<meta property="og:description" content="谱聚类简介这里先提前说下谱聚类的基本特征，然后后面按照论文的顺序做了讲解。  谱聚类算法与kmeans的区别，是把聚类的过程看成了一个图切割的过程，每一条样本都看成是N维空间内的一个节点，然后我们希望切割出来的子图，在子图内部点与点之前的距离(也就是相似度)会比较高，子图与子图之间的距离尽可能的小。 在谱聚类的过程中会把原始数据会做变换，从高维空间映射到低维空间，这样更容易进行聚类，可以看成向量">
+<meta property="og:description" content="谱聚类简介">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/laplacian_matrix.jpg">
 <meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/sc1.png">
@@ -33,10 +33,10 @@
 <meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/graph_cut_7.png">
 <meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/graph_cut_8.png">
 <meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/graph_cut_9.png">
-<meta property="og:updated_time" content="2018-05-19T16:58:56.536Z">
+<meta property="og:updated_time" content="2018-05-19T17:00:45.102Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="谱聚类算法介绍(Spectral Clustering)">
-<meta name="twitter:description" content="谱聚类简介这里先提前说下谱聚类的基本特征，然后后面按照论文的顺序做了讲解。  谱聚类算法与kmeans的区别，是把聚类的过程看成了一个图切割的过程，每一条样本都看成是N维空间内的一个节点，然后我们希望切割出来的子图，在子图内部点与点之前的距离(也就是相似度)会比较高，子图与子图之间的距离尽可能的小。 在谱聚类的过程中会把原始数据会做变换，从高维空间映射到低维空间，这样更容易进行聚类，可以看成向量">
+<meta name="twitter:description" content="谱聚类简介">
 <meta name="twitter:image" content="http://blog.mltalks.com/images/spectral-clustering/laplacian_matrix.jpg">
 
     
@@ -108,8 +108,8 @@
 		
 		</div>
 		
-		<a id="more"></a>
-<h2 id="谱聚类简介"><a href="#谱聚类简介" class="headerlink" title="谱聚类简介"></a>谱聚类简介</h2><p>这里先提前说下谱聚类的基本特征，然后后面按照论文的顺序做了讲解。</p>
+		<h2 id="谱聚类简介"><a href="#谱聚类简介" class="headerlink" title="谱聚类简介"></a>谱聚类简介</h2><a id="more"></a>
+<p>这里先提前说下谱聚类的基本特征，然后后面按照论文的顺序做了讲解。</p>
 <ul>
 <li>谱聚类算法与kmeans的区别，是把聚类的过程看成了一个图切割的过程，每一条样本都看成是N维空间内的一个节点，然后我们希望切割出来的子图，在子图内部点与点之前的距离(也就是相似度)会比较高，子图与子图之间的距离尽可能的小。</li>
 <li>在谱聚类的过程中会把原始数据会做变换，从高维空间映射到低维空间，这样更容易进行聚类，可以看成向量化的过程。</li>
@@ -328,15 +328,15 @@
 		<ul class="clearfix">
 		
 			
+				<li><a href="/tags/机器学习/" title="机器学习">机器学习<sup>1</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/其他/" title="其他">其他<sup>1</sup></a></li>
 			
 		
 			
 				<li><a href="/tags/系统架构/" title="系统架构">系统架构<sup>1</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/机器学习/" title="机器学习">机器学习<sup>1</sup></a></li>
 			
 		
 		</ul>

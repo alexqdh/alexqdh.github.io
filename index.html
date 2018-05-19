@@ -86,145 +86,12 @@
 </header>
     <div class="article-content">
         
-        <a id="more"></a>
-<h2 id="谱聚类简介"><a href="#谱聚类简介" class="headerlink" title="谱聚类简介"></a>谱聚类简介</h2><p>这里先提前说下谱聚类的基本特征，然后后面按照论文的顺序做了讲解。</p>
-<ul>
-<li>谱聚类算法与kmeans的区别，是把聚类的过程看成了一个图切割的过程，每一条样本都看成是N维空间内的一个节点，然后我们希望切割出来的子图，在子图内部点与点之前的距离(也就是相似度)会比较高，子图与子图之间的距离尽可能的小。</li>
-<li>在谱聚类的过程中会把原始数据会做变换，从高维空间映射到低维空间，这样更容易进行聚类，可以看成向量化的过程。</li>
-<li>矩阵的谱(spectrum)在数学中的定义表示是矩阵一系列的特征值。</li>
-</ul>
-<h2 id="图相关的基本概念"><a href="#图相关的基本概念" class="headerlink" title="图相关的基本概念"></a>图相关的基本概念</h2><h3 id="相似图-Similarity-Graph"><a href="#相似图-Similarity-Graph" class="headerlink" title="相似图(Similarity Graph)"></a>相似图(Similarity Graph)</h3><h4 id="推导符号说明"><a href="#推导符号说明" class="headerlink" title="推导符号说明"></a>推导符号说明</h4><ul>
-<li>有一组数据节点 $x_1, x_2, …, x_n$，任意两个节点(例如 $x_i, x_j$ )之间的相似度(也就是距离)用 $S_{ij}$ 来表示。</li>
-<li>无向图的表示为 $G=(V, E)$，其中 $V={v_1, v_2, …, v_n}$ 中每一个 $v_i$ 表示一个数据节点 $x_i$, $E$ 表示节点与节点之间边的集合。</li>
-<li>每条边都有一个权重值 $w_{ij}$ 表示节点 $v_i$ 与 $v_j$ 之间的相似度，如果 $w_{ij}$ 等于0表示两个节点是没有边进行连接的。</li>
-<li>定义邻接矩阵（adjacency matrix）$W=(w_{ij})_{i,j=1,…n}$ 表示所有节点之间的距离，权重都是非负的(即 $w_{ij} \ge 0$ ), 无向图中 $w_{ij} = w_{ji}$ 。</li>
-<li><p>一个节点 $v_i \in V$ 的度(degree) $d_i$ 定义为</p>
-<blockquote>
-<p><center>$d_i=\sum\limits_{j=1}^{n}w_{ij}$<center></center></center></p>
-</blockquote>
-</li>
-<li><p>定义度矩阵(degree matrix) $D$ 是由于 $d_1, …, d_n$ 组成的对角矩阵；</p>
-</li>
-<li>定义指示矩阵(indicator matrix) $\mathbb{1}_A = (f_1,…,f_n)’ \in  \mathbb{R}^n $，当节点 $v_i \in A$ 时 $f_i=1$, 否则 $f_i=0$；</li>
-<li>另外为了后面推导方便，再多定义一种简要写法: 用 $i \in A$ 代替写法 $ \lbrace i| v_i \in A \rbrace $，例如写一个求和公式的会用到: $\sum_{i \in A}w_{ij}$</li>
-<li>$V$ 的两个子集($A, B \subset V$)之间的关系用 $W(A, B) := \sum\limits_{i \in A, j \in B}w_{ij}$，即A, B中任意两个节点的距离(相似度)之和。</li>
-<li>衡量一个子集$A \subset V$ 的大小的方法有两种: 一种是用A中节点的个数($|A|$)表示，一种是用A中所有节点的度(degree)之和($vol(A) := \sum\limits_{i \in A}d_i$)表示 </li>
-<li>称一个子集 $A \subset V$ 是连通(connected)的意思表示A中任意两个节点都有边进行连接，以及这条连通边上的所有点也都在A这个子集中；<br>称一个子集 $A \subset V$ 是连通组件(connected component)的意思是A是连通的，且$ A 与 \overline A$ 之间没有边进行连接。(这里$\overline A$表示$\lbrace i| v_i \in V, v_i \notin A \rbrace$) </li>
-</ul>
-<h4 id="构建相似图的三种方法"><a href="#构建相似图的三种方法" class="headerlink" title="构建相似图的三种方法"></a>构建相似图的三种方法</h4><ul>
-<li>$\varepsilon$距离相似图: 设置一个大小为$\varepsilon$的距离，然后分别计算两两节点之间的距离(相似度)，如果两两节点之间的距离小于$\varepsilon$，那么我们就把这两个节点连接在一起，因为节点之间距离是相互的，这个构建图是无向图。</li>
-<li>k近邻相似图: 遍历每个节点，计算与当前节点相邻的距离最近的k个节点，然后把这k个节点和当前节点进行连接。这样的连接通常是有向图，因为A的k近邻节点包含B，但是B的k近邻节点不一定包含A。<br>把有向图转成无向图有两种方法：（1）只要A的k近邻包含B或者B的k近邻包含A，就认为A和B是连通的 （2）只有A的k近邻包含B且B的k近邻包含A，才认为A和B是连通的</li>
-<li>全连接图: 连接所有节点, $X_i$与$X_j$节点之间的距离用$S_{ij}$来表示，距离需要能够表示节点本身的距离范围，所以这里采用了高斯相似函数$ S(X_i, X_j) = exp(−||X_i - X_j||^2 / (2\sigma^2)) $</li>
-</ul>
-<h3 id="拉普拉斯图-Graph-Laplacians-及其特性说明"><a href="#拉普拉斯图-Graph-Laplacians-及其特性说明" class="headerlink" title="拉普拉斯图(Graph Laplacians)及其特性说明"></a>拉普拉斯图(Graph Laplacians)及其特性说明</h3><p>谱聚类主要是基于拉普拉斯矩阵来做的，算法过程中会用到特征值的概念，特征值通常从小到大来进行排列，下面遇到的『前k个特征向量』通常是指前k小个特征值对应的特征向量。</p>
-<h3 id="非标准化的拉普拉斯矩阵"><a href="#非标准化的拉普拉斯矩阵" class="headerlink" title="非标准化的拉普拉斯矩阵"></a>非标准化的拉普拉斯矩阵</h3><p>非标准化的拉普拉斯矩阵通常被定义为:</p>
-<blockquote>
-<center>$L = D - W$ (D为度矩阵，W为相似矩阵)</center> 
-</blockquote>
-<p>示例如图所示(<a href="https://en.wikipedia.org/wiki/Laplacian_matrix#Symmetric_normalized_Laplacian_2" target="_blank" rel="noopener">图片出处</a>):<br><img src="/images/spectral-clustering/laplacian_matrix.jpg" alt=""> </p>
-<h4 id="主张1-关于拉普拉斯矩阵L满足的性质"><a href="#主张1-关于拉普拉斯矩阵L满足的性质" class="headerlink" title="主张1 关于拉普拉斯矩阵L满足的性质"></a>主张1 关于拉普拉斯矩阵L满足的性质</h4><ul>
-<li><p>对于每一个向量$f \in \mathbb{R}^n$, 有下列等式成立:</p>
-<blockquote>
-<center>$f’Lf = \frac{1}{2} \sum\limits_{i,j=1}^n w_{ij}(f_i - f_j)^2$</center>
-</blockquote>
-<p>  证明过程:</p>
-<blockquote>
-<p><center>$f’Lf = f’Df - f’Wf = \sum\limits_{i=1}^n d_{i}f_{i}^2 - \sum\limits_{i,j=1}^n f_{i}f_{j}w_{ij}$ </center><br><center>$ = \frac{1}{2} \left ( \sum\limits_{i=1}^n d_{i} f_{i}^2 - 2 \sum\limits_{i,j=1}^n f_{i} f_{j} w_{ij} + \sum\limits_{j=1}^n d_{j} f_{j}^2 \right ) $</center><br><center>$ = \frac{1}{2} \left ( \sum\limits_{i,j=1}^n w_{ij} (f_i - f_j)^2 \right ) $</center><br>证毕。</p>
-</blockquote>
-</li>
-<li><p>L矩阵是对称的, 且是半正定的</p>
-<p>  证明过程: 因为矩阵W和D都是对称的，所以求得的L也是对称的。因为对于所有的$ f \in \mathbb{R}^n，存在f’Lf \ge 0$，所以L是半正定的,证毕。</p>
-</li>
-<li><p>L矩阵最小的特征值是0，0对应的特征向量是$ \mathbb{1} $常数向量(constant vector)，即向量中所有的值都是常数，且为1</p>
-<p>  证明过程: 等式$ f’Lf = 0 $ 成立，这里f为$ \mathbb{1} $常数向量,证毕。</p>
-</li>
-<li><p>L有n个非负数的实数特征值，$ 0 = \lambda_1 \le \lambda_2 \le … \le \lambda_n $ </p>
-</li>
-</ul>
-<h4 id="主张2-关于拉普拉斯矩阵L中连通组件的个数与矩阵的谱"><a href="#主张2-关于拉普拉斯矩阵L中连通组件的个数与矩阵的谱" class="headerlink" title="主张2 关于拉普拉斯矩阵L中连通组件的个数与矩阵的谱"></a>主张2 关于拉普拉斯矩阵L中连通组件的个数与矩阵的谱</h4><blockquote>
-<p>定义G为一个无向图，无向图中所有权重都是非负的。如果无向图的拉普拉斯矩阵L的0特征值出现的次数(<a href="https://math.stackexchange.com/questions/324427/how-to-find-the-multiplicity-of-eigenvalues/324437" target="_blank" rel="noopener">multiplicity</a>)为k，那么图中连通组件($ A_1, A_2, …, A_n $)的个数也为k。这些特征值0对应的特征指示向量为$ \mathbb{1}_{A_1},…,\mathbb{1}_{A_n}  $</p>
-</blockquote>
-<p>证明过程: 我们先假设$ k=1 $ 的情况，当 $ k=1 $ 时图是连通的(注意这里不是连通组件，连通和连通组件是不同概念)，f是特征值为0对应的特征矩阵。于是我们有  </p>
-<blockquote>
-<center> $ 0 = f’Lf = \sum\limits_{i,j=1}^{n} w_{ij}(f_i - f_j)^2 $ </center>  
-</blockquote>
-<p>这里因为 $ w_{ij} $ 是非负的，如果这里 $ w_{ij} \gt 0 $ 的话，要想上面等式成立的话要有$ f_i = f_j $，所以这里f需要是一个常数向量才能实现。又因为连通矩阵中任意两两节点都有连接，所以需要等式成立的话，f必须是一个$ \mathbb{1} $常数向量，f也是L矩阵的指示向量。<br>现在开始考虑 $ k &gt; 1 $的情况，这时我们手动把原始所有节点根据它们所属的连通组件进行重新排序以后，邻接矩阵$ W $可以得到一个对角块矩阵的形式，同样拉普拉斯矩阵$ L $也是一个对角块矩阵的形式，如下图所示:</p>
-<blockquote>
-<center><br>$$ \left ( \begin{array}{rrrr}<br> &amp; L_1 &amp; &amp; &amp; \\<br> &amp;  &amp; L_2 &amp; &amp;  \\<br> &amp;  &amp;  &amp; \cdot\cdot\cdot &amp; \\<br> &amp;  &amp;  &amp;  &amp; L_k  \\<br>\end{array} \right )<br>$$<br></center> 
-</blockquote>
-<p>每一个$ L_i $都是一个连通组件(满足子集合内部两两节点有连线，且连通组件与连通组件之间没有连线)。</p>
-<p><strong>L矩阵的谱(特征值)是各个子集$ L_i $的谱组成的</strong>，证明过程如下:<br>根据特征向量的性质，具有特征值为$ \lambda $的块矩阵A满足下列等式:</p>
-<blockquote>
-<center><br>$$ det \left ( \begin{array}{rr}<br>&amp; B-\lambda I &amp; C \\<br>&amp; 0 &amp; D-\lambda I  \\<br>\end{array} \right )<br>$$<br></center>
-</blockquote>
-<p>根据行列式的性质可以得到:</p>
-<blockquote>
-<center><br>$$ det \left ( \begin{array}{rr}<br>&amp; B-\lambda I &amp; C \\<br>&amp; 0 &amp; D-\lambda I  \\<br>\end{array} \right ) = det(B - \lambda I) det(D - \lambda I) = 0<br>$$<br></center>
-</blockquote>
-<p>可以看出B与D的特征值也都是A的特征值，证毕。</p>
-<p>最后从上述也可以看出，特征值0的个数就等于连通组件子图的个数，特征向量f就是连通组件子图的指示向量。</p>
-<h3 id="标准化-normalized-的拉普拉斯矩阵"><a href="#标准化-normalized-的拉普拉斯矩阵" class="headerlink" title="标准化(normalized)的拉普拉斯矩阵"></a>标准化(normalized)的拉普拉斯矩阵</h3><p>标准化的拉普拉斯矩阵通常被定义为:</p>
-<blockquote>
-<center> $ L_{sym} := D^{-\frac{1}{2}} L D^{\frac{1}{2}} = I - D^{\frac{1}{2}} W D^{-\frac{1}{2}} $ (D为度矩阵，W为相似矩阵)</center><br><center> $ L_{rw} := D^{-1} L = I - D^{-1} W $ </center>
-</blockquote>
-<p>这里$L_{sym} $处理完是对称矩阵，$L_{rw} $跟随机游走的方法很相似。下面列出一些标准化拉普拉斯矩阵的性质。</p>
-<h4 id="主张3-L-sym-与-L-rw-矩阵的性质"><a href="#主张3-L-sym-与-L-rw-矩阵的性质" class="headerlink" title="主张3 $L_{sym} 与 L_{rw}矩阵的性质$"></a>主张3 $L_{sym} 与 L_{rw}矩阵的性质$</h4><ul>
-<li>对于每一个$ f \in \mathbb{R}^n$， 都有<blockquote>
-<center> $ f’L_{sym} f = \frac{1}{2} \sum\limits_{i,j=1}^n w_{ij} \left ( \frac{f_i}{\sqrt{d_i}} - \frac{f_j}{\sqrt{d_j}} \right )^2 $ </center> 
-</blockquote>
-</li>
-</ul>
-<p>证明过程可参考 &lt;主张1&gt; 中证明，这里$ D \rightarrow D^{-\frac{1}{2}}, d_i \rightarrow \frac{1}{\sqrt{d_i}} $</p>
-<ul>
-<li><p>$ \lambda 和 \mu 分别是 L_{rw} 的特征值和特征向量，当且仅当 L_{sym} 的特征向量也是 \lambda, 特征向量是 w = D^{\frac{1}{2}} \mu $</p>
-</li>
-<li><p>$ \lambda 和 \mu 分别是 L_{rw} 的特征值和特征向量，当且仅当 \lambda 和 \mu 满足泛化的特征问题 L \mu = \lambda D \mu $</p>
-</li>
-<li><p>$ L_{rw}的特征值为0时，特征向量是\mathbb{1} 常数向量；L_{sym}的特征值为0时，特征向量是D^{\frac{1}{2}} \mathbb{1} $</p>
-</li>
-<li><p>$ L_{rw} 和 L_{sym} 都是半正定的，具有非负实数特征值 0 = \lambda_{1} \le \lambda_{2} \le … \le \lambda_{n} $</p>
-</li>
-</ul>
-<h4 id="主张4-关于连通组件的个数以及-L-sym-和-L-rw-的谱"><a href="#主张4-关于连通组件的个数以及-L-sym-和-L-rw-的谱" class="headerlink" title="主张4 关于连通组件的个数以及$ L_{sym} $ 和 $ L_{rw} $ 的谱"></a>主张4 关于连通组件的个数以及$ L_{sym} $ 和 $ L_{rw} $ 的谱</h4><blockquote>
-<p>G是一个无向图，$ L_{rw} $ 和 $ L_{sym} $ 值为0的特征值的个数等同于连通组件($ A_1, \dots, A_k $)的个数。<br>对于$ L_{rw} $ 0特征值对应的指示矩阵为$ \mathbb{1}_{A_i} $, 对于 $ L_{sym} $ 0特征值对应的指示矩阵为$ D^{\frac{1}{2}} \mathbb{1}_{A_i} $</p>
-</blockquote>
-<h2 id="谱聚类算法描述"><a href="#谱聚类算法描述" class="headerlink" title="谱聚类算法描述"></a>谱聚类算法描述</h2><h3 id="非标准化-unnormalized-的谱聚类"><a href="#非标准化-unnormalized-的谱聚类" class="headerlink" title="非标准化(unnormalized)的谱聚类"></a>非标准化(unnormalized)的谱聚类</h3><p><img src="/images/spectral-clustering/sc1.png" alt=""></p>
-<blockquote>
-<p>过程:<br>输入矩阵$ S \in R^{n \times n} $构建相似图, 创建W为邻接矩阵， D为度矩阵<br>计算非标准化的拉普拉斯矩阵L, L=D-W<br>计算矩阵L的前k小的特征值对应的特征向量<br>输出矩阵$ U \in R^{n \times k} $，输入的每个节点的表示就都转化成了k维向量，U矩阵中的每一行都表示一个节点<br>把所有的节点通过k-means方法进行聚类<br>产出$ A_1, A_2, …, A_n $结果</p>
-</blockquote>
-<h3 id="标准化-normalized-的谱聚类"><a href="#标准化-normalized-的谱聚类" class="headerlink" title="标准化(normalized)的谱聚类"></a>标准化(normalized)的谱聚类</h3><h4 id="算法1"><a href="#算法1" class="headerlink" title="算法1"></a>算法1</h4><p><img src="/images/spectral-clustering/sc2.png" alt=""></p>
-<blockquote>
-<p>过程:<br>输入矩阵$ S \in R^{n \times n} $构建相似图, 创建W为邻接矩阵， D为度矩阵<br>计算非标准化的拉普拉斯矩阵L, L=D-W<br><strong> 计算$ L \mu = \lambda D \mu $的前k小的特征值对应的特征向量（实际上求的是$ L_{rw} $的特征向量）</strong><br>输出矩阵$ U \in R^{n \times k} $，输入的每个节点的表示就都转化成了k维向量，U矩阵中的每一行都表示一个节点<br>把所有的节点通过k-means方法进行聚类<br>产出$ A_1, A_2, …, A_n $结果 </p>
-</blockquote>
-<h4 id="算法2"><a href="#算法2" class="headerlink" title="算法2"></a>算法2</h4><p><img src="/images/spectral-clustering/sc3.png" alt=""></p>
-<blockquote>
-<p>过程:<br>输入矩阵$ S \in R^{n \times n} $构建相似图, 创建W为邻接矩阵， D为度矩阵<br>计算非标准化的拉普拉斯矩阵L, L=D-W<br><strong> 计算$ L \mu = \lambda D \mu $的前k小的特征值对应的特征向量（实际上求的是$ L_{rw} $的特征向量）</strong><br>输出矩阵$ U \in R^{n \times k} $，输入的每个节点的表示就都转化成了k维向量，U矩阵中的每一行都表示一个节点<br><strong> 将U矩阵中每一行作归一化, 然后生成新的矩阵T </strong><br>把所有的节点通过k-means方法进行聚类<br>产出$ A_1, A_2, …, A_n $结果 </p>
-</blockquote>
-<h4 id="示例说明"><a href="#示例说明" class="headerlink" title="示例说明"></a>示例说明</h4><p><img src="/images/spectral-clustering/sc_demo.png" alt=""></p>
-<p>文中给了一个示例，通过4种混合高斯方法随机生成大约200个节点进行谱聚类。图第一行是这200个节点（$ x_i, y_i $）的条形分布，x,y轴分别表示节点的位置距离。接下来2,3行是k近邻相似图的标准和非标准化拉普拉斯矩阵的特征值和特征向量，4，5行是全连接相似图的标准和非标准拉普拉斯矩阵的特征值和特征向量。特征值的横坐标是特征值的索引，纵坐标是特征值的value；特征向量图的横坐标含义是$ x_i $，纵坐标是特征向量的实数值。第二行中有4个特征值为0，根据之前的推导可以知道该矩阵中存在4个连通组件，且每个特征值为0的特征向量都是这个矩阵的指示向量。从第三行中第二个特征向量从0的位置画一条横线，能把聚类的簇1，4和簇2，3区分出来，类似的，第三个特征向量的图中从0的位置画一条横线，可以把簇1，4和簇2，3区分开来。能区分以后就可以通过聚类的方式来进行类别的检测了。</p>
-<h2 id="图切分角度来谈谱聚类算法"><a href="#图切分角度来谈谱聚类算法" class="headerlink" title="图切分角度来谈谱聚类算法"></a>图切分角度来谈谱聚类算法</h2><p>谱聚类的初衷就是为了把图中的节点按照他们的相似度进行切分成不同的组，最终希望可以达到组内两两节点之间的连线权重越高越好，而组与组($ A_1,\dots,A_k $)之间的连线权重越低越好。<br>用形式化的表示即:</p>
-<blockquote>
-<center>$ min cut(A_1, \dots, A_k) := \frac{1}{2} \sum\limits_{i=1}^k W(A_i, \overline A_i) $</center>
-</blockquote>
-<p>这里乘上$ \frac{1}{2} $是因为无向图权重会被重复计算两次。按照这种最小化切割出来的图经常会碰到单个节点被切割出来的情况，为了解决这种情况，通过下列两种方式对上述公式进行了优化。<br><img src="/images/spectral-clustering/graph_cut_1.png" alt=""></p>
-<p>这里$ |A_i| $表示$ A_i $集合中节点的总个数，$ vol(A_i) $ 表示$ A_i $集合中所有边上权重加和。当$ A_i $中包含了所有节点的时候，上述两个等式才是最小的。</p>
-<h3 id="图切分只有两类-k-2-时RatioCut的情况"><a href="#图切分只有两类-k-2-时RatioCut的情况" class="headerlink" title="图切分只有两类(k=2)时RatioCut的情况"></a>图切分只有两类(k=2)时RatioCut的情况</h3><p>我们的目标是</p>
-<blockquote>
-<center> $ \min\limits_{A \subset V} RatioCut(A, \overline A) $ </center>
-</blockquote>
-<p>定义向量$ f=(f_1,\dots,f_n)’ \in R^n $为下列等式:<br><img src="/images/spectral-clustering/graph_cut_2.png" alt=""></p>
-<p>定义完f以后有下列几个等式成立:<br><img src="/images/spectral-clustering/graph_cut_3.png" alt=""><br>可以看出把$ min\ RatioCut(A, \overline A) $等价为优化 $ min\ f’Lf $ </p>
-<p><img src="/images/spectral-clustering/graph_cut_4.png" alt=""><br>可以看出f向量正交于$ \mathbb{1} $常数向量</p>
-<p><img src="/images/spectral-clustering/graph_cut_5.png" alt=""><br>可以看出$ ||f|| = \sqrt{n} $</p>
-<p>汇总上面的出来的信息得到优化整体目标:<br><img src="/images/spectral-clustering/graph_cut_6.png" alt=""></p>
-<p>上面的优化目标只针对f属于两个值，我们可以把f的取值再次进行扩展，不限制f的取值即可以得到下面的优化目标:<br><img src="/images/spectral-clustering/graph_cut_7.png" alt=""></p>
-<p>求解$ f’Lf $的特征向量非常困难, 通过<a href="https://en.wikipedia.org/wiki/Rayleigh%E2%80%93Ritz_method" target="_blank" rel="noopener">Rayleigh-Ritz 理论</a>求的近似解。Rayleigh-Ritz理论告诉我们如果求解$ Ax = \lambda x$困哪的话，可以通过$ R \leftarrow V^* A V $变换以后，求解$ Rv_i = \widetilde{\lambda}_i v_i $，最终得到Ritz对 $ (\widetilde{\lambda}_i, \widetilde{x}_i) = (\widetilde{\lambda}_i, Vv_i)$。所以我们这里可以先求得L矩阵的前k小的非0的特征值对应的特征向量(即指示向量f)。<br>对于二分类的话，通过指示向量我们可以用下面的规则来进行类别判断:<br><img src="/images/spectral-clustering/graph_cut_8.png" alt=""><br>对于多分类的话，指示向量可以通过属于多个范围来进行类别的划分:<br><img src="/images/spectral-clustering/graph_cut_9.png" alt=""></p>
-<p>这里其实就是非规则化的谱聚类算法的初衷，因为规则化的谱聚类算法跟非规则化非常相似这里不在赘述，详情可以参见论文<a href="https://www.cs.cmu.edu/~aarti/Class/10701/readings/Luxburg06_TR.pdf" target="_blank" rel="noopener">A Tutorial on Spectral Clustering</a>。规则化两种算法的区别这里说下因为算法2没有归一化的话可能会因为权重太小造成最终的效果不准确，所以为了避免遇到权重过下的情况这里多做了一次归一化的操作，扰动理论可以参见<a href="https://en.wikipedia.org/wiki/Perturbation_theory" target="_blank" rel="noopener">这里</a>。而算法1本身是采用的随机游走$L_{rw}$的方式来进行的，其实在除以节点数的时候就已经算是做了归一化了，所以不用再额外来做。</p>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p><a href="https://www.cs.cmu.edu/~aarti/Class/10701/readings/Luxburg06_TR.pdf" target="_blank" rel="noopener">A Tutorial on Spectral Clustering</a><br><a href="https://www.cnblogs.com/sparkwen/p/3155850.html" target="_blank" rel="noopener">基于论文的翻译</a><br><a href="https://www.cvl.isy.liu.se/education/graduate/VRML-2016/" target="_blank" rel="noopener">谱聚类教程</a><br><a href="https://en.wikipedia.org/wiki/Laplacian_matrix#Symmetric_normalized_Laplacian_2" target="_blank" rel="noopener">wikipedia里对拉普拉斯矩阵变化讲解</a><br><a href="https://en.wikipedia.org/wiki/Spectrum_of_a_matrix" target="_blank" rel="noopener">Spectrum of a matrix</a><br><a href="https://code.google.com/archive/p/pspectralclustering/" target="_blank" rel="noopener">谱聚类mpi实现</a><br><a href="https://math.stackexchange.com/questions/324427/how-to-find-the-multiplicity-of-eigenvalues/324437" target="_blank" rel="noopener">multiplicity of eigenvalues</a><br><a href="https://math.stackexchange.com/questions/207865/the-eigenvalues-of-a-block-matrix" target="_blank" rel="noopener">The Eigenvalues of a block matrix</a><br><a href="https://en.wikipedia.org/wiki/Rayleigh%E2%80%93Ritz_method" target="_blank" rel="noopener">Rayleigh–Ritz method</a><br><a href="https://en.wikipedia.org/wiki/Perturbation_theory" target="_blank" rel="noopener">Perturbation theory</a><br><a href="https://math.meta.stackexchange.com/questions/5020/mathjax-basic-tutorial-and-quick-reference" target="_blank" rel="noopener">MathJax basic tutorial and quick reference</a><br><a href="http://mohu.org/info/symbols/symbols.htm" target="_blank" rel="noopener">常用数学符号的 LaTeX 表示方法</a></p>
-
+        <h2 id="谱聚类简介"><a href="#谱聚类简介" class="headerlink" title="谱聚类简介"></a>谱聚类简介</h2>
         
         
         <p class="article-more-link">
+          
+            <a href="/2018/05/18/Spectral-Clustering/#more">Read More</a>
           
        </p>
     </div>
@@ -465,15 +332,15 @@
 		<ul class="clearfix">
 		
 			
+				<li><a href="/tags/机器学习/" title="机器学习">机器学习<sup>1</sup></a></li>
+			
+		
+			
 				<li><a href="/tags/其他/" title="其他">其他<sup>1</sup></a></li>
 			
 		
 			
 				<li><a href="/tags/系统架构/" title="系统架构">系统架构<sup>1</sup></a></li>
-			
-		
-			
-				<li><a href="/tags/机器学习/" title="机器学习">机器学习<sup>1</sup></a></li>
 			
 		
 		</ul>
