@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>谱聚类算法介绍(Spectral Clustering) | alexqin分享笔记</title>
+    <title>谱聚类算法介绍(Spectral Clustering) | Alexqin&#39;s Blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
     
     <meta name="author" content="alexqdh">
@@ -12,21 +12,35 @@
 
     
     <meta name="description" content="谱聚类简介这里先提前说下谱聚类的基本特征，然后后面按照论文的顺序做了讲解。  谱聚类算法与kmeans的区别，是把聚类的过程看成了一个图切割的过程，每一条样本都看成是N维空间内的一个节点，然后我们希望切割出来的子图，在子图内部点与点之前的距离(也就是相似度)会比较高，子图与子图之间的距离尽可能的小。 在谱聚类的过程中会把原始数据会做变换，从高维空间映射到低维空间，这样更容易进行聚类，可以看成向量">
+<meta name="keywords" content="机器学习">
 <meta property="og:type" content="article">
 <meta property="og:title" content="谱聚类算法介绍(Spectral Clustering)">
 <meta property="og:url" content="http://blog.mltalks.com/2018/05/18/Spectral-Clustering/index.html">
-<meta property="og:site_name" content="alexqin分享笔记">
+<meta property="og:site_name" content="Alexqin&#39;s Blog">
 <meta property="og:description" content="谱聚类简介这里先提前说下谱聚类的基本特征，然后后面按照论文的顺序做了讲解。  谱聚类算法与kmeans的区别，是把聚类的过程看成了一个图切割的过程，每一条样本都看成是N维空间内的一个节点，然后我们希望切割出来的子图，在子图内部点与点之前的距离(也就是相似度)会比较高，子图与子图之间的距离尽可能的小。 在谱聚类的过程中会把原始数据会做变换，从高维空间映射到低维空间，这样更容易进行聚类，可以看成向量">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/laplacian_matrix.jpg">
-<meta property="og:updated_time" content="2018-05-19T14:29:03.244Z">
+<meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/sc1.png">
+<meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/sc2.png">
+<meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/sc3.png">
+<meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/sc_demo.png">
+<meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/graph_cut_1.png">
+<meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/graph_cut_2.png">
+<meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/graph_cut_3.png">
+<meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/graph_cut_4.png">
+<meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/graph_cut_5.png">
+<meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/graph_cut_6.png">
+<meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/graph_cut_7.png">
+<meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/graph_cut_8.png">
+<meta property="og:image" content="http://blog.mltalks.com/images/spectral-clustering/graph_cut_9.png">
+<meta property="og:updated_time" content="2018-05-19T16:58:56.536Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="谱聚类算法介绍(Spectral Clustering)">
 <meta name="twitter:description" content="谱聚类简介这里先提前说下谱聚类的基本特征，然后后面按照论文的顺序做了讲解。  谱聚类算法与kmeans的区别，是把聚类的过程看成了一个图切割的过程，每一条样本都看成是N维空间内的一个节点，然后我们希望切割出来的子图，在子图内部点与点之前的距离(也就是相似度)会比较高，子图与子图之间的距离尽可能的小。 在谱聚类的过程中会把原始数据会做变换，从高维空间映射到低维空间，这样更容易进行聚类，可以看成向量">
 <meta name="twitter:image" content="http://blog.mltalks.com/images/spectral-clustering/laplacian_matrix.jpg">
 
     
-    <link rel="alternative" href="/atom.xml" title="alexqin分享笔记" type="application/atom+xml">
+    <link rel="alternative" href="/atom.xml" title="Alexqin&#39;s Blog" type="application/atom+xml">
     
     
     
@@ -39,8 +53,8 @@
 <div>
 		
 			<div id="textlogo">
-				<h1 class="site-name"><a href="/" title="alexqin分享笔记">alexqin分享笔记</a></h1>
-				<h2 class="blog-motto"></h2>
+				<h1 class="site-name"><a href="/" title="Alexqin&#39;s Blog">Alexqin&#39;s Blog</a></h1>
+				<h2 class="blog-motto">Never forget why you started, and your mission can be accomplished.</h2>
 			</div>
 			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
 			</a></div>
@@ -90,7 +104,7 @@
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#谱聚类简介"><span class="toc-number">1.</span> <span class="toc-text">谱聚类简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#图相关的基本概念"><span class="toc-number">2.</span> <span class="toc-text">图相关的基本概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#相似图-Similarity-Graph"><span class="toc-number">2.1.</span> <span class="toc-text">相似图(Similarity Graph)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#推导符号说明"><span class="toc-number">2.1.1.</span> <span class="toc-text">推导符号说明</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#构建相似图的三种方法"><span class="toc-number">2.1.2.</span> <span class="toc-text">构建相似图的三种方法</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#拉普拉斯图-Graph-Laplacians-及其特性说明"><span class="toc-number">2.2.</span> <span class="toc-text">拉普拉斯图(Graph Laplacians)及其特性说明</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#非标准化的拉普拉斯矩阵"><span class="toc-number">2.3.</span> <span class="toc-text">非标准化的拉普拉斯矩阵</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#主张1-关于拉普拉斯矩阵L满足的性质"><span class="toc-number">2.3.1.</span> <span class="toc-text">主张1 关于拉普拉斯矩阵L满足的性质</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#主张2-关于拉普拉斯矩阵L中连通组件的个数与矩阵的谱"><span class="toc-number">2.3.2.</span> <span class="toc-text">主张2 关于拉普拉斯矩阵L中连通组件的个数与矩阵的谱</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#标准化-normalized-的拉普拉斯矩阵"><span class="toc-number">2.4.</span> <span class="toc-text">标准化(normalized)的拉普拉斯矩阵</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#主张3-L-sym-与-L-rw-矩阵的性质"><span class="toc-number">2.4.1.</span> <span class="toc-text">主张3 $L_{sym} 与 L_{rw}矩阵的性质$</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#主张4-关于连通组件的个数以及-L-sym-和-L-rw-的谱"><span class="toc-number">2.4.2.</span> <span class="toc-text">主张4 关于连通组件的个数以及$ L_{sym} $ 和 $ L_{rw} $ 的谱</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-number">3.</span> <span class="toc-text">参考资料:</span></a></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#谱聚类简介"><span class="toc-number">1.</span> <span class="toc-text">谱聚类简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#图相关的基本概念"><span class="toc-number">2.</span> <span class="toc-text">图相关的基本概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#相似图-Similarity-Graph"><span class="toc-number">2.1.</span> <span class="toc-text">相似图(Similarity Graph)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#推导符号说明"><span class="toc-number">2.1.1.</span> <span class="toc-text">推导符号说明</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#构建相似图的三种方法"><span class="toc-number">2.1.2.</span> <span class="toc-text">构建相似图的三种方法</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#拉普拉斯图-Graph-Laplacians-及其特性说明"><span class="toc-number">2.2.</span> <span class="toc-text">拉普拉斯图(Graph Laplacians)及其特性说明</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#非标准化的拉普拉斯矩阵"><span class="toc-number">2.3.</span> <span class="toc-text">非标准化的拉普拉斯矩阵</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#主张1-关于拉普拉斯矩阵L满足的性质"><span class="toc-number">2.3.1.</span> <span class="toc-text">主张1 关于拉普拉斯矩阵L满足的性质</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#主张2-关于拉普拉斯矩阵L中连通组件的个数与矩阵的谱"><span class="toc-number">2.3.2.</span> <span class="toc-text">主张2 关于拉普拉斯矩阵L中连通组件的个数与矩阵的谱</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#标准化-normalized-的拉普拉斯矩阵"><span class="toc-number">2.4.</span> <span class="toc-text">标准化(normalized)的拉普拉斯矩阵</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#主张3-L-sym-与-L-rw-矩阵的性质"><span class="toc-number">2.4.1.</span> <span class="toc-text">主张3 $L_{sym} 与 L_{rw}矩阵的性质$</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#主张4-关于连通组件的个数以及-L-sym-和-L-rw-的谱"><span class="toc-number">2.4.2.</span> <span class="toc-text">主张4 关于连通组件的个数以及$ L_{sym} $ 和 $ L_{rw} $ 的谱</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#谱聚类算法描述"><span class="toc-number">3.</span> <span class="toc-text">谱聚类算法描述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#非标准化-unnormalized-的谱聚类"><span class="toc-number">3.1.</span> <span class="toc-text">非标准化(unnormalized)的谱聚类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#标准化-normalized-的谱聚类"><span class="toc-number">3.2.</span> <span class="toc-text">标准化(normalized)的谱聚类</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#算法1"><span class="toc-number">3.2.1.</span> <span class="toc-text">算法1</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#算法2"><span class="toc-number">3.2.2.</span> <span class="toc-text">算法2</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#示例说明"><span class="toc-number">3.2.3.</span> <span class="toc-text">示例说明</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#图切分角度来谈谱聚类算法"><span class="toc-number">4.</span> <span class="toc-text">图切分角度来谈谱聚类算法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#图切分只有两类-k-2-时RatioCut的情况"><span class="toc-number">4.1.</span> <span class="toc-text">图切分只有两类(k=2)时RatioCut的情况</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-number">5.</span> <span class="toc-text">参考资料</span></a></li></ol>
 		
 		</div>
 		
@@ -175,7 +189,7 @@
 <blockquote>
 <center> $ L_{sym} := D^{-\frac{1}{2}} L D^{\frac{1}{2}} = I - D^{\frac{1}{2}} W D^{-\frac{1}{2}} $ (D为度矩阵，W为相似矩阵)</center><br><center> $ L_{rw} := D^{-1} L = I - D^{-1} W $ </center>
 </blockquote>
-<p>这里$L_sym$处理完是对称矩阵，$L_rw$跟随机游走的方法很相似。下面列出一些标准化拉普拉斯矩阵的性质。</p>
+<p>这里$L_{sym} $处理完是对称矩阵，$L_{rw} $跟随机游走的方法很相似。下面列出一些标准化拉普拉斯矩阵的性质。</p>
 <h4 id="主张3-L-sym-与-L-rw-矩阵的性质"><a href="#主张3-L-sym-与-L-rw-矩阵的性质" class="headerlink" title="主张3 $L_{sym} 与 L_{rw}矩阵的性质$"></a>主张3 $L_{sym} 与 L_{rw}矩阵的性质$</h4><ul>
 <li>对于每一个$ f \in \mathbb{R}^n$， 都有<blockquote>
 <center> $ f’L_{sym} f = \frac{1}{2} \sum\limits_{i,j=1}^n w_{ij} \left ( \frac{f_i}{\sqrt{d_i}} - \frac{f_j}{\sqrt{d_j}} \right )^2 $ </center> 
@@ -196,12 +210,49 @@
 <h4 id="主张4-关于连通组件的个数以及-L-sym-和-L-rw-的谱"><a href="#主张4-关于连通组件的个数以及-L-sym-和-L-rw-的谱" class="headerlink" title="主张4 关于连通组件的个数以及$ L_{sym} $ 和 $ L_{rw} $ 的谱"></a>主张4 关于连通组件的个数以及$ L_{sym} $ 和 $ L_{rw} $ 的谱</h4><blockquote>
 <p>G是一个无向图，$ L_{rw} $ 和 $ L_{sym} $ 值为0的特征值的个数等同于连通组件($ A_1, \dots, A_k $)的个数。<br>对于$ L_{rw} $ 0特征值对应的指示矩阵为$ \mathbb{1}_{A_i} $, 对于 $ L_{sym} $ 0特征值对应的指示矩阵为$ D^{\frac{1}{2}} \mathbb{1}_{A_i} $</p>
 </blockquote>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料:"></a>参考资料:</h2><p><a href="https://www.cs.cmu.edu/~aarti/Class/10701/readings/Luxburg06_TR.pdf" target="_blank" rel="noopener">A Tutorial on Spectral Clustering</a><br><a href="https://www.cnblogs.com/sparkwen/p/3155850.html" target="_blank" rel="noopener">基于论文的翻译</a><br><a href="https://www.cvl.isy.liu.se/education/graduate/VRML-2016/" target="_blank" rel="noopener">谱聚类教程</a><br><a href="https://en.wikipedia.org/wiki/Laplacian_matrix#Symmetric_normalized_Laplacian_2" target="_blank" rel="noopener">wikipedia里对拉普拉斯矩阵变化讲解</a><br><a href="https://en.wikipedia.org/wiki/Spectrum_of_a_matrix" target="_blank" rel="noopener">Spectrum of a matrix</a><br><a href="https://code.google.com/archive/p/pspectralclustering/" target="_blank" rel="noopener">谱聚类mpi实现</a><br><a href="https://math.stackexchange.com/questions/324427/how-to-find-the-multiplicity-of-eigenvalues/324437" target="_blank" rel="noopener">multiplicity of eigenvalues</a><br><a href="https://math.stackexchange.com/questions/207865/the-eigenvalues-of-a-block-matrix" target="_blank" rel="noopener">The Eigenvalues of a block matrix</a><br><a href="https://en.wikipedia.org/wiki/Rayleigh%E2%80%93Ritz_method" target="_blank" rel="noopener">Rayleigh–Ritz method</a><br><a href="https://en.wikipedia.org/wiki/Perturbation_theory" target="_blank" rel="noopener">Perturbation theory</a><br><a href="https://math.meta.stackexchange.com/questions/5020/mathjax-basic-tutorial-and-quick-reference" target="_blank" rel="noopener">MathJax basic tutorial and quick reference</a><br><a href="http://mohu.org/info/symbols/symbols.htm" target="_blank" rel="noopener">常用数学符号的 LaTeX 表示方法</a></p>
+<h2 id="谱聚类算法描述"><a href="#谱聚类算法描述" class="headerlink" title="谱聚类算法描述"></a>谱聚类算法描述</h2><h3 id="非标准化-unnormalized-的谱聚类"><a href="#非标准化-unnormalized-的谱聚类" class="headerlink" title="非标准化(unnormalized)的谱聚类"></a>非标准化(unnormalized)的谱聚类</h3><p><img src="/images/spectral-clustering/sc1.png" alt=""></p>
+<blockquote>
+<p>过程:<br>输入矩阵$ S \in R^{n \times n} $构建相似图, 创建W为邻接矩阵， D为度矩阵<br>计算非标准化的拉普拉斯矩阵L, L=D-W<br>计算矩阵L的前k小的特征值对应的特征向量<br>输出矩阵$ U \in R^{n \times k} $，输入的每个节点的表示就都转化成了k维向量，U矩阵中的每一行都表示一个节点<br>把所有的节点通过k-means方法进行聚类<br>产出$ A_1, A_2, …, A_n $结果</p>
+</blockquote>
+<h3 id="标准化-normalized-的谱聚类"><a href="#标准化-normalized-的谱聚类" class="headerlink" title="标准化(normalized)的谱聚类"></a>标准化(normalized)的谱聚类</h3><h4 id="算法1"><a href="#算法1" class="headerlink" title="算法1"></a>算法1</h4><p><img src="/images/spectral-clustering/sc2.png" alt=""></p>
+<blockquote>
+<p>过程:<br>输入矩阵$ S \in R^{n \times n} $构建相似图, 创建W为邻接矩阵， D为度矩阵<br>计算非标准化的拉普拉斯矩阵L, L=D-W<br><strong> 计算$ L \mu = \lambda D \mu $的前k小的特征值对应的特征向量（实际上求的是$ L_{rw} $的特征向量）</strong><br>输出矩阵$ U \in R^{n \times k} $，输入的每个节点的表示就都转化成了k维向量，U矩阵中的每一行都表示一个节点<br>把所有的节点通过k-means方法进行聚类<br>产出$ A_1, A_2, …, A_n $结果 </p>
+</blockquote>
+<h4 id="算法2"><a href="#算法2" class="headerlink" title="算法2"></a>算法2</h4><p><img src="/images/spectral-clustering/sc3.png" alt=""></p>
+<blockquote>
+<p>过程:<br>输入矩阵$ S \in R^{n \times n} $构建相似图, 创建W为邻接矩阵， D为度矩阵<br>计算非标准化的拉普拉斯矩阵L, L=D-W<br><strong> 计算$ L \mu = \lambda D \mu $的前k小的特征值对应的特征向量（实际上求的是$ L_{rw} $的特征向量）</strong><br>输出矩阵$ U \in R^{n \times k} $，输入的每个节点的表示就都转化成了k维向量，U矩阵中的每一行都表示一个节点<br><strong> 将U矩阵中每一行作归一化, 然后生成新的矩阵T </strong><br>把所有的节点通过k-means方法进行聚类<br>产出$ A_1, A_2, …, A_n $结果 </p>
+</blockquote>
+<h4 id="示例说明"><a href="#示例说明" class="headerlink" title="示例说明"></a>示例说明</h4><p><img src="/images/spectral-clustering/sc_demo.png" alt=""></p>
+<p>文中给了一个示例，通过4种混合高斯方法随机生成大约200个节点进行谱聚类。图第一行是这200个节点（$ x_i, y_i $）的条形分布，x,y轴分别表示节点的位置距离。接下来2,3行是k近邻相似图的标准和非标准化拉普拉斯矩阵的特征值和特征向量，4，5行是全连接相似图的标准和非标准拉普拉斯矩阵的特征值和特征向量。特征值的横坐标是特征值的索引，纵坐标是特征值的value；特征向量图的横坐标含义是$ x_i $，纵坐标是特征向量的实数值。第二行中有4个特征值为0，根据之前的推导可以知道该矩阵中存在4个连通组件，且每个特征值为0的特征向量都是这个矩阵的指示向量。从第三行中第二个特征向量从0的位置画一条横线，能把聚类的簇1，4和簇2，3区分出来，类似的，第三个特征向量的图中从0的位置画一条横线，可以把簇1，4和簇2，3区分开来。能区分以后就可以通过聚类的方式来进行类别的检测了。</p>
+<h2 id="图切分角度来谈谱聚类算法"><a href="#图切分角度来谈谱聚类算法" class="headerlink" title="图切分角度来谈谱聚类算法"></a>图切分角度来谈谱聚类算法</h2><p>谱聚类的初衷就是为了把图中的节点按照他们的相似度进行切分成不同的组，最终希望可以达到组内两两节点之间的连线权重越高越好，而组与组($ A_1,\dots,A_k $)之间的连线权重越低越好。<br>用形式化的表示即:</p>
+<blockquote>
+<center>$ min cut(A_1, \dots, A_k) := \frac{1}{2} \sum\limits_{i=1}^k W(A_i, \overline A_i) $</center>
+</blockquote>
+<p>这里乘上$ \frac{1}{2} $是因为无向图权重会被重复计算两次。按照这种最小化切割出来的图经常会碰到单个节点被切割出来的情况，为了解决这种情况，通过下列两种方式对上述公式进行了优化。<br><img src="/images/spectral-clustering/graph_cut_1.png" alt=""></p>
+<p>这里$ |A_i| $表示$ A_i $集合中节点的总个数，$ vol(A_i) $ 表示$ A_i $集合中所有边上权重加和。当$ A_i $中包含了所有节点的时候，上述两个等式才是最小的。</p>
+<h3 id="图切分只有两类-k-2-时RatioCut的情况"><a href="#图切分只有两类-k-2-时RatioCut的情况" class="headerlink" title="图切分只有两类(k=2)时RatioCut的情况"></a>图切分只有两类(k=2)时RatioCut的情况</h3><p>我们的目标是</p>
+<blockquote>
+<center> $ \min\limits_{A \subset V} RatioCut(A, \overline A) $ </center>
+</blockquote>
+<p>定义向量$ f=(f_1,\dots,f_n)’ \in R^n $为下列等式:<br><img src="/images/spectral-clustering/graph_cut_2.png" alt=""></p>
+<p>定义完f以后有下列几个等式成立:<br><img src="/images/spectral-clustering/graph_cut_3.png" alt=""><br>可以看出把$ min\ RatioCut(A, \overline A) $等价为优化 $ min\ f’Lf $ </p>
+<p><img src="/images/spectral-clustering/graph_cut_4.png" alt=""><br>可以看出f向量正交于$ \mathbb{1} $常数向量</p>
+<p><img src="/images/spectral-clustering/graph_cut_5.png" alt=""><br>可以看出$ ||f|| = \sqrt{n} $</p>
+<p>汇总上面的出来的信息得到优化整体目标:<br><img src="/images/spectral-clustering/graph_cut_6.png" alt=""></p>
+<p>上面的优化目标只针对f属于两个值，我们可以把f的取值再次进行扩展，不限制f的取值即可以得到下面的优化目标:<br><img src="/images/spectral-clustering/graph_cut_7.png" alt=""></p>
+<p>求解$ f’Lf $的特征向量非常困难, 通过<a href="https://en.wikipedia.org/wiki/Rayleigh%E2%80%93Ritz_method" target="_blank" rel="noopener">Rayleigh-Ritz 理论</a>求的近似解。Rayleigh-Ritz理论告诉我们如果求解$ Ax = \lambda x$困哪的话，可以通过$ R \leftarrow V^* A V $变换以后，求解$ Rv_i = \widetilde{\lambda}_i v_i $，最终得到Ritz对 $ (\widetilde{\lambda}_i, \widetilde{x}_i) = (\widetilde{\lambda}_i, Vv_i)$。所以我们这里可以先求得L矩阵的前k小的非0的特征值对应的特征向量(即指示向量f)。<br>对于二分类的话，通过指示向量我们可以用下面的规则来进行类别判断:<br><img src="/images/spectral-clustering/graph_cut_8.png" alt=""><br>对于多分类的话，指示向量可以通过属于多个范围来进行类别的划分:<br><img src="/images/spectral-clustering/graph_cut_9.png" alt=""></p>
+<p>这里其实就是非规则化的谱聚类算法的初衷，因为规则化的谱聚类算法跟非规则化非常相似这里不在赘述，详情可以参见论文<a href="https://www.cs.cmu.edu/~aarti/Class/10701/readings/Luxburg06_TR.pdf" target="_blank" rel="noopener">A Tutorial on Spectral Clustering</a>。规则化两种算法的区别这里说下因为算法2没有归一化的话可能会因为权重太小造成最终的效果不准确，所以为了避免遇到权重过下的情况这里多做了一次归一化的操作，扰动理论可以参见<a href="https://en.wikipedia.org/wiki/Perturbation_theory" target="_blank" rel="noopener">这里</a>。而算法1本身是采用的随机游走$L_{rw}$的方式来进行的，其实在除以节点数的时候就已经算是做了归一化了，所以不用再额外来做。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p><a href="https://www.cs.cmu.edu/~aarti/Class/10701/readings/Luxburg06_TR.pdf" target="_blank" rel="noopener">A Tutorial on Spectral Clustering</a><br><a href="https://www.cnblogs.com/sparkwen/p/3155850.html" target="_blank" rel="noopener">基于论文的翻译</a><br><a href="https://www.cvl.isy.liu.se/education/graduate/VRML-2016/" target="_blank" rel="noopener">谱聚类教程</a><br><a href="https://en.wikipedia.org/wiki/Laplacian_matrix#Symmetric_normalized_Laplacian_2" target="_blank" rel="noopener">wikipedia里对拉普拉斯矩阵变化讲解</a><br><a href="https://en.wikipedia.org/wiki/Spectrum_of_a_matrix" target="_blank" rel="noopener">Spectrum of a matrix</a><br><a href="https://code.google.com/archive/p/pspectralclustering/" target="_blank" rel="noopener">谱聚类mpi实现</a><br><a href="https://math.stackexchange.com/questions/324427/how-to-find-the-multiplicity-of-eigenvalues/324437" target="_blank" rel="noopener">multiplicity of eigenvalues</a><br><a href="https://math.stackexchange.com/questions/207865/the-eigenvalues-of-a-block-matrix" target="_blank" rel="noopener">The Eigenvalues of a block matrix</a><br><a href="https://en.wikipedia.org/wiki/Rayleigh%E2%80%93Ritz_method" target="_blank" rel="noopener">Rayleigh–Ritz method</a><br><a href="https://en.wikipedia.org/wiki/Perturbation_theory" target="_blank" rel="noopener">Perturbation theory</a><br><a href="https://math.meta.stackexchange.com/questions/5020/mathjax-basic-tutorial-and-quick-reference" target="_blank" rel="noopener">MathJax basic tutorial and quick reference</a><br><a href="http://mohu.org/info/symbols/symbols.htm" target="_blank" rel="noopener">常用数学符号的 LaTeX 表示方法</a></p>
   
 	</div>
 		<footer class="article-footer clearfix">
 <div class="article-catetags">
 
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/机器学习/">机器学习</a>
+  </div>
 
 </div>
 
@@ -209,7 +260,7 @@
 
 	<div class="article-share" id="share">
 	
-	  <div data-url="http://blog.mltalks.com/2018/05/18/Spectral-Clustering/" data-title="谱聚类算法介绍(Spectral Clustering) | alexqin分享笔记" data-tsina="" class="share clearfix">
+	  <div data-url="http://blog.mltalks.com/2018/05/18/Spectral-Clustering/" data-title="谱聚类算法介绍(Spectral Clustering) | Alexqin&#39;s Blog" data-tsina="" class="share clearfix">
 	  </div>
 	
 	</div>
@@ -224,9 +275,9 @@
  
 
 <div class="next">
-<a href="/2018/01/24/paddle-fluid-code-2/"  title="paddle_fluid_code_2">
+<a href="/2018/01/24/paddle-fluid-code-2/"  title="paddle fluid版本代码解析">
  <strong>下一篇：</strong><br/> 
- <span>paddle_fluid_code_2
+ <span>paddle fluid版本代码解析
 </span>
 </a>
 </div>
@@ -243,7 +294,7 @@
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#谱聚类简介"><span class="toc-number">1.</span> <span class="toc-text">谱聚类简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#图相关的基本概念"><span class="toc-number">2.</span> <span class="toc-text">图相关的基本概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#相似图-Similarity-Graph"><span class="toc-number">2.1.</span> <span class="toc-text">相似图(Similarity Graph)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#推导符号说明"><span class="toc-number">2.1.1.</span> <span class="toc-text">推导符号说明</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#构建相似图的三种方法"><span class="toc-number">2.1.2.</span> <span class="toc-text">构建相似图的三种方法</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#拉普拉斯图-Graph-Laplacians-及其特性说明"><span class="toc-number">2.2.</span> <span class="toc-text">拉普拉斯图(Graph Laplacians)及其特性说明</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#非标准化的拉普拉斯矩阵"><span class="toc-number">2.3.</span> <span class="toc-text">非标准化的拉普拉斯矩阵</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#主张1-关于拉普拉斯矩阵L满足的性质"><span class="toc-number">2.3.1.</span> <span class="toc-text">主张1 关于拉普拉斯矩阵L满足的性质</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#主张2-关于拉普拉斯矩阵L中连通组件的个数与矩阵的谱"><span class="toc-number">2.3.2.</span> <span class="toc-text">主张2 关于拉普拉斯矩阵L中连通组件的个数与矩阵的谱</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#标准化-normalized-的拉普拉斯矩阵"><span class="toc-number">2.4.</span> <span class="toc-text">标准化(normalized)的拉普拉斯矩阵</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#主张3-L-sym-与-L-rw-矩阵的性质"><span class="toc-number">2.4.1.</span> <span class="toc-text">主张3 $L_{sym} 与 L_{rw}矩阵的性质$</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#主张4-关于连通组件的个数以及-L-sym-和-L-rw-的谱"><span class="toc-number">2.4.2.</span> <span class="toc-text">主张4 关于连通组件的个数以及$ L_{sym} $ 和 $ L_{rw} $ 的谱</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-number">3.</span> <span class="toc-text">参考资料:</span></a></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#谱聚类简介"><span class="toc-number">1.</span> <span class="toc-text">谱聚类简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#图相关的基本概念"><span class="toc-number">2.</span> <span class="toc-text">图相关的基本概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#相似图-Similarity-Graph"><span class="toc-number">2.1.</span> <span class="toc-text">相似图(Similarity Graph)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#推导符号说明"><span class="toc-number">2.1.1.</span> <span class="toc-text">推导符号说明</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#构建相似图的三种方法"><span class="toc-number">2.1.2.</span> <span class="toc-text">构建相似图的三种方法</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#拉普拉斯图-Graph-Laplacians-及其特性说明"><span class="toc-number">2.2.</span> <span class="toc-text">拉普拉斯图(Graph Laplacians)及其特性说明</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#非标准化的拉普拉斯矩阵"><span class="toc-number">2.3.</span> <span class="toc-text">非标准化的拉普拉斯矩阵</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#主张1-关于拉普拉斯矩阵L满足的性质"><span class="toc-number">2.3.1.</span> <span class="toc-text">主张1 关于拉普拉斯矩阵L满足的性质</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#主张2-关于拉普拉斯矩阵L中连通组件的个数与矩阵的谱"><span class="toc-number">2.3.2.</span> <span class="toc-text">主张2 关于拉普拉斯矩阵L中连通组件的个数与矩阵的谱</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#标准化-normalized-的拉普拉斯矩阵"><span class="toc-number">2.4.</span> <span class="toc-text">标准化(normalized)的拉普拉斯矩阵</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#主张3-L-sym-与-L-rw-矩阵的性质"><span class="toc-number">2.4.1.</span> <span class="toc-text">主张3 $L_{sym} 与 L_{rw}矩阵的性质$</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#主张4-关于连通组件的个数以及-L-sym-和-L-rw-的谱"><span class="toc-number">2.4.2.</span> <span class="toc-text">主张4 关于连通组件的个数以及$ L_{sym} $ 和 $ L_{rw} $ 的谱</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#谱聚类算法描述"><span class="toc-number">3.</span> <span class="toc-text">谱聚类算法描述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#非标准化-unnormalized-的谱聚类"><span class="toc-number">3.1.</span> <span class="toc-text">非标准化(unnormalized)的谱聚类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#标准化-normalized-的谱聚类"><span class="toc-number">3.2.</span> <span class="toc-text">标准化(normalized)的谱聚类</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#算法1"><span class="toc-number">3.2.1.</span> <span class="toc-text">算法1</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#算法2"><span class="toc-number">3.2.2.</span> <span class="toc-text">算法2</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#示例说明"><span class="toc-number">3.2.3.</span> <span class="toc-text">示例说明</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#图切分角度来谈谱聚类算法"><span class="toc-number">4.</span> <span class="toc-text">图切分角度来谈谱聚类算法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#图切分只有两类-k-2-时RatioCut的情况"><span class="toc-number">4.1.</span> <span class="toc-text">图切分只有两类(k=2)时RatioCut的情况</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-number">5.</span> <span class="toc-text">参考资料</span></a></li></ol>
  
   </div>
 
@@ -282,6 +333,10 @@
 		
 			
 				<li><a href="/tags/系统架构/" title="系统架构">系统架构<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/机器学习/" title="机器学习">机器学习<sup>1</sup></a></li>
 			
 		
 		</ul>
@@ -482,6 +537,16 @@ $(document).ready(function(){
 <!-- Analytics Begin -->
 
 
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "//hm.baidu.com/hm.js?c09f9b1d3a3209183766025637409496";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
 
 
 
