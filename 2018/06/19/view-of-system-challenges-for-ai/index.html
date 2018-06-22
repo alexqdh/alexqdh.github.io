@@ -20,7 +20,7 @@
 <meta property="og:description" content="伯克利团队关于未来AI系统发展展望">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://blog.mltalks.com/images/view-of-system-challenges-for-ai/ai1.png">
-<meta property="og:updated_time" content="2018-06-21T02:47:08.726Z">
+<meta property="og:updated_time" content="2018-06-22T16:31:28.616Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="伯克利团队关于未来AI系统发展展望">
 <meta name="twitter:description" content="伯克利团队关于未来AI系统发展展望">
@@ -109,7 +109,7 @@
 </ul>
 <p>挑战: 发展领域(domain-specific)的架构和软件系统去满足后摩尔时代性能要求，例如定制的人工智能芯片、高效处理的数据的边缘云计算(edge-cloud)以及数据的采集与抽样方法的发展。</p>
 <h2 id="未来研究的机遇"><a href="#未来研究的机遇" class="headerlink" title="未来研究的机遇"></a>未来研究的机遇</h2><p>这里根据上述说的4种发展趋势，总结出来了9种未来可能的研究的机遇<strong>(R1-R9)</strong>，这9点研究方向分属于三个主题(动态环境下的AI学习、安全AI、AI专属架构)，如下图所示<br><img src="/images/view-of-system-challenges-for-ai/ai1.png" alt=""></p>
-<h3 id="R1-持续学习"><a href="#R1-持续学习" class="headerlink" title="R1 持续学习"></a>R1 持续学习</h3><p>持续学习的一种方法是在线学习(Online Learning)，通过在线学习对模型可以进行天级别、小时级别的更新，传统的在线学习不能很好的处理控制问题, 对环境变化的适应能力不够，特别是在关键任务上处理的不好。为了处理更加通用的问题一个方向是采用增强学习(Reinforcement Learning)来进行处理，RL算法的本质是学习一个策略函数(也叫Policy)，这个Policy可以将观察到的东西作为输入数据，然后映射到一组行为上作为Policy的输出内容，例如自动驾驶中观察到小汽车摄像头中的内容以及用户的请求作为输入, 然后产生了汽车减速或者给用户展现广告的策略结果输出。尽管RL算法现在取的了一些成绩，但后续还会有更大的发展，目前很多系统的设计还没有涉及RL。我们需要建造一个增强学习的新的系统，系统可以通过传感器获取环境的变化，然后每条会执行上百万次的模拟以优化模型结构，目前已有的HPC和分布式系统都达不到这样的要求。另外一点需要做的模拟显示(Simulated Reality)，因为现实环境中的交互或者环境触发是非常低频的，一个靠谱策略的学习需要经过大量的实验，这时要求我们去构建一种模拟现实的系统来持续的模拟显示环境，并给出每条执行策略预期的结果反馈。模拟现实的作业除了可以非常快的进行交互反馈，另外还可以规避交互过程中的可能的安全风险。再说下跟VR与AR的区别，VR主要是模拟虚拟的环境(如Minecraft游戏)，AR主要是考虑虚拟与现实的一种结合。</p>
+<h3 id="R1-持续学习"><a href="#R1-持续学习" class="headerlink" title="R1 持续学习"></a>R1 持续学习</h3><p>持续学习的一种方法是在线学习(Online Learning)，通过在线学习对模型可以进行天级别、小时级别的更新，传统的在线学习不能很好的处理控制问题, 对环境变化的适应能力不够，特别是在关键任务上处理的不好。为了处理更加通用的问题一个方向是采用增强学习(Reinforcement Learning)来进行处理，RL算法的本质是学习一个策略函数(也叫Policy)，这个Policy可以将观察到的东西作为输入数据，然后映射到一组行为上作为Policy的输出内容，例如自动驾驶中观察到小汽车摄像头中的内容以及用户的请求作为输入, 然后产生了汽车减速或者给用户展现广告的策略结果输出。尽管RL算法现在取的了一些成绩，但后续还会有更大的发展，目前很多系统的设计还没有涉及RL。我们需要建造一个增强学习的新的系统，系统可以通过传感器获取环境的变化，然后每条会执行上百万次的模拟以优化模型结构，目前已有的HPC和分布式系统都达不到这样的要求。另外一点需要做的仿真(Simulated Reality)，因为现实环境中的交互或者环境触发是非常低频的，一个靠谱策略的学习需要经过大量的实验，这时要求我们去构建一种仿真的系统来持续的模拟现实环境，并给出每条执行策略预期的结果反馈。仿真的作业除了可以非常快的进行交互反馈，另外还可以规避交互过程中的可能的安全风险。再说下跟VR与AR的区别，VR主要是模拟虚拟的环境(如Minecraft游戏)，AR主要是考虑虚拟与现实的一种结合。</p>
 <p>总结: </p>
 <ul>
 <li>构建一个RL系统支持高效并行处理以及动态图处理，毫秒级延时，支持异构硬件</li>
@@ -159,7 +159,10 @@
 <li>终端与云服务提供的能力差距会不断增大，例如手机终端的电源以及空间大小会有更严格的限制</li>
 <li>终端上会有越来越多的异构硬件，部署环境非常复杂</li>
 <li>终端上的软件与硬件的升级速度远低于云服务的数据中心</li>
-<li>存储容量的扩张速度在减慢，但数据的产出速度还是非常快的，导致可能没有足够的空间去存储数据<br>文中也提出了几种方法来解决:</li>
+<li>存储容量的扩张速度在减慢，但数据的产出速度还是非常快的，导致可能没有足够的空间去存储数据</li>
+</ul>
+<p>文中也提出了几种方法来解决:</p>
+<ul>
 <li>通过软件结构的升级以及编译技术针对不同的硬件设备对代码进行重新编译(<a href="https://www.tensorflow.org/performance/xla/" target="_blank" rel="noopener">XLA</a>干的就是这个事情)，然后通过API的方式对外提供服务。</li>
 <li>另外一种方式是将AI系统进行拆分，在终端上运行准确度不那么高的小模型预测(考虑模型压缩也算一部分)，而把计算密集型的模型训练部署在云端。这种组合的方式可以有效降低延时，同时精度也不会有明显损失。</li>
 <li>为了解决数据量巨大的情况，一种研究方向是利用抽样等方式来减少数据量，也在特征和模型选择上有一定的应用。</li>
@@ -169,7 +172,7 @@
 <li>利用终端设备去降低响应延时、提高安全性、实现只能的数据保留技术</li>
 <li>利用云服务资源去共享数据与模型给终端设备，在云端训练复杂的模型结构, 做出高质量的决策</li>
 </ul>
-<h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><p><a href="https://arxiv.org/pdf/1712.05855.pdf" target="_blank" rel="noopener">论文原文</a><br><a href="http://blog.sciencenet.cn/blog-3370725-1085270.html" target="_blank" rel="noopener">论文完整的中文翻译</a><br><a href="https://arxiv.org/abs/1803.05961" target="_blank" rel="noopener">SGX论文 Chiron: Privacy-preserving Machine Learning as a Service</a><br><a href="http://ai.51cto.com/art/201804/570387.htm" target="_blank" rel="noopener">机器学习隐私(Intel SGX)</a><br><a href="https://www.zhihu.com/question/31565742" target="_blank" rel="noopener">如何评价Intel的SGX技术</a><br><a href="https://www.infoq.com/articles/differential-privacy-intro" target="_blank" rel="noopener">infoq关于差分隐私的介绍</a><br><a href="https://www.utdallas.edu/~muratk/courses/privacy08f_files/differential-privacy.pdf" target="_blank" rel="noopener">差分隐私论文 differential-privacy</a></p>
+<h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><p><a href="https://arxiv.org/pdf/1712.05855.pdf" target="_blank" rel="noopener">论文原文</a><br><a href="http://blog.sciencenet.cn/blog-3370725-1085270.html" target="_blank" rel="noopener">论文完整的中文翻译</a><br><a href="https://arxiv.org/abs/1803.05961" target="_blank" rel="noopener">SGX论文 Chiron: Privacy-preserving Machine Learning as a Service</a><br><a href="http://ai.51cto.com/art/201804/570387.htm" target="_blank" rel="noopener">机器学习隐私(Intel SGX)</a><br><a href="https://www.zhihu.com/question/31565742" target="_blank" rel="noopener">如何评价Intel的SGX技术</a><br><a href="https://u.cs.biu.ac.il/~lindell/research-statements/tutorial-secure-computation.ppt" target="_blank" rel="noopener">Tutorial on Secure Multi-Party Computation</a><br><a href="http://www.wisdom.weizmann.ac.il/~oded/PSX/prot.pdf" target="_blank" rel="noopener">MPC论文 Secure Multi-Party Computation</a><br><a href="https://www.infoq.com/articles/differential-privacy-intro" target="_blank" rel="noopener">infoq关于差分隐私的介绍</a><br><a href="https://www.utdallas.edu/~muratk/courses/privacy08f_files/differential-privacy.pdf" target="_blank" rel="noopener">差分隐私论文 differential-privacy</a></p>
   
 	</div>
 		<footer class="article-footer clearfix">
